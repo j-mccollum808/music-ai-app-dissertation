@@ -2,6 +2,9 @@
 const BASE_URL = 'https://api.music.ai/v1';
 const API_KEY = import.meta.env.VITE_MUSIC_AI_KEY;
 
+console.log('👉 Using API key:', API_KEY);
+
+
 if (!API_KEY) {
   throw new Error('VITE_MUSIC_AI_KEY is not defined — did you add it to .env.local and restart Vite?');
 }

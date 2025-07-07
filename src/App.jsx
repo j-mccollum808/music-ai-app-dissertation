@@ -7,12 +7,46 @@ export default function App() {
   const [jobs, setJobs] = useState([]);
   const [jobDetails, setJobDetails] = useState(null);
   const [chordMapData, setChordMapData] = useState([]);
+  const [lyricsData, setLyricsData] = useState([]);
+  const [sectionsData, setSectionsData] = useState([]);
+
+
 
   // Fetch list of jobs on initial mount
   useEffect(() => {
-    listJobs()
-      .then(setJobs)
-      .catch(err => console.error('❌ listJobs error:', err));
+  listJobs()
+    .then(res => {
+      console.log('fetched jobs:', res);
+      setJobs(res);
+    })
+    .catch(err => console.error('listJobs error:', err));
+}, []);
+
+useEffect(() => {
+    const TEST_ID = 'e2c0244c-02ad-4240-83d8-d9808ea08b18';
+
+    getJob(TEST_ID)
+      .then(detail => {
+        setJobDetails(detail);
+
+        const urls = {
+          sections: detail.result?.sections,
+          chords: detail.result?.['chord map'],
+          lyrics: detail.result?.['lyrics aligned']
+        };
+
+        return Promise.all([
+          urls.sections ? fetchJSON(urls.sections) : Promise.resolve([]),
+          urls.chords  ? fetchJSON(urls.chords)  : Promise.resolve([]),
+          urls.lyrics  ? fetchJSON(urls.lyrics)  : Promise.resolve([])
+        ]);
+      })
+      .then(([sections, chords, lyrics]) => {
+        setSectionsData(Array.isArray(sections) ? sections : []);
+        setChordMapData(Array.isArray(chords)   ? chords   : []);
+        setLyricsData(Array.isArray(lyrics)     ? lyrics   : []);
+      })
+      .catch(err => console.error('❌ load test job error:', err));
   }, []);
 
   // Handler to fetch a single job’s details and its chord map JSON
@@ -39,60 +73,62 @@ export default function App() {
     }
   };
 
-  return (
-    <div style={{ padding: '1rem', fontFamily: 'sans-serif', background: '#222', color: '#fff' }}>
-      <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Music AI Jobs</h1>
-      <p style={{ marginBottom: '1rem' }}>Click “View Details” to load job info and chord map.</p>
+   return (
+    <div className="App p-4">
+      <h1 className="text-2xl font-bold mb-4">Job Results</h1>
 
-      {/* List of jobs */}
-      <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', marginBottom: '1.5rem' }}>
-        {jobs.map(job => (
-          <li key={job.id} style={{ marginBottom: '0.5rem' }}>
-            <strong>{job.id}</strong> — {job.status}
-            <button
-              onClick={() => viewDetails(job.id)}
-              style={{ marginLeft: '0.5rem', textDecoration: 'underline', color: '#61dafb', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              View Details
-            </button>
-          </li>
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Sections</h2>
+        {sectionsData.length
+          ? (
+            <ul className="list-disc list-inside">
+              {sectionsData.map((sec, i) => (
+                <li key={i}>
+                  <strong>{sec.label}</strong> @ {sec.start}s – {sec.end}s
+                </li>
+              ))}
+            </ul>
+          )
+          : <p>No sections data.</p>
+        }
+      </section>
+
+       <section className="mb-6">
+  <h2 className="text-xl font-semibold mb-2">Chord Map</h2>
+  {chordMapData.length
+    ? (
+      <div className="grid grid-cols-4 gap-4">
+        {chordMapData.map((c, i) => (
+          <div
+            key={i}
+            className="p-2 border rounded text-center"
+          >
+            {c.chord_majmin}
+          </div>
         ))}
-      </ul>
+      </div>
+    )
+    : <p>No chord data.</p>
+  }
+</section>
 
-      {/* Render job details */}
-      {jobDetails && (
-        <section style={{ background: '#333', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Job Details</h2>
-          <pre style={{ overflowX: 'auto', fontSize: '0.875rem' }}>
-            {JSON.stringify(jobDetails, null, 2)}
-          </pre>
-        </section>
-      )}
-
-      {/* Render chord map in a 4-column CSS grid */}
-      {chordMapData.length > 0 && (
-        <section style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-          <h2 style={{ gridColumn: '1 / -1', fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>Chord Map</h2>
-          {chordMapData.map((item, idx) => (
-            <div
-              key={idx}
-              style={{
-                border: '1px solid #555',
-                padding: '1rem',
-                borderRadius: '0.5rem',
-                textAlign: 'center',
-                background: '#444',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                color: '#fff'
-              }}
-            >
-              {item.chord_majmin}
+      <section>
+        <h2 className="text-xl font-semibold mb-2">Lyrics Aligned</h2>
+        {lyricsData.length
+          ? (
+            <div className="space-y-1">
+              {lyricsData.map((line, i) => (
+                <p key={i}>
+                  <span className="font-mono text-sm">{line.time}s</span>{' '}
+                  {line.text}
+                </p>
+              ))}
             </div>
-          ))}
-        </section>
-      )}
+          )
+          : <p>No lyrics data.</p>
+        }
+      </section>
     </div>
   );
 }
-
 
