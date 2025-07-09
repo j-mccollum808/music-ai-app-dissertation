@@ -1,106 +1,63 @@
-// src/App.jsx
+// src/ChordMapPage.jsx
 import { useState, useEffect } from "react";
-import { listJobs, getJob, fetchJSON } from "./api.js";
-import "./App.css";
+import { useParams } from "react-router-dom";
+import { getJob, fetchJSON } from "./api.js";
 
-export default function App() {
-  const [jobDetails, setJobDetails] = useState(null);
-  const [chordMapData, setChordMapData] = useState([]);
-  const [lyricsData, setLyricsData] = useState([]);
-  const [sectionsData, setSectionsData] = useState([]);
-  const formatChord = (chord) => {
-    return chord
-      .replace(":maj", "") // drop “:maj”
-      .replace(":min", "m"); // turn “:min” into “m”
-  };
+export default function ChordMapPage() {
+  const { jobId } = useParams();
+  const [sections, setSections] = useState([]);
+  const [chords, setChords] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const formatChord = (chord) => chord.replace(":maj", "").replace(":min", "m");
 
   useEffect(() => {
-    const TEST_ID = "e2c0244c-02ad-4240-83d8-d9808ea08b18";
-
-    getJob(TEST_ID)
+    setLoading(true);
+    getJob(jobId)
       .then((detail) => {
-        setJobDetails(detail);
-
-        const urls = {
-          sections: detail.result?.sections,
-          chords: detail.result?.["chord map"],
-          lyrics: detail.result?.["lyrics aligned"],
-        };
-
+        // Grab the URLs using the exact result keys
+        const secUrl = detail.result?.Sections;
+        const chordUrl = detail.result?.chords;
         return Promise.all([
-          urls.sections ? fetchJSON(urls.sections) : Promise.resolve([]),
-          urls.chords ? fetchJSON(urls.chords) : Promise.resolve([]),
-          urls.lyrics ? fetchJSON(urls.lyrics) : Promise.resolve([]),
+          secUrl ? fetchJSON(secUrl) : Promise.resolve([]),
+          chordUrl ? fetchJSON(chordUrl) : Promise.resolve([]),
         ]);
       })
-      .then(([sections, chords, lyrics]) => {
-        console.log("RAW sections:", sections);
-        console.log("RAW chords:  ", chords);
-        setSectionsData(Array.isArray(sections) ? sections : []);
-        setChordMapData(Array.isArray(chords) ? chords : []);
-        setLyricsData(Array.isArray(lyrics) ? lyrics : []);
+      .then(([secs, chs]) => {
+        setSections(Array.isArray(secs) ? secs : []);
+        setChords(Array.isArray(chs) ? chs : []);
       })
-      .catch((err) => console.error("❌ load test job error:", err));
-  }, []);
+      .catch((err) => console.error("❌ load job error:", err))
+      .finally(() => setLoading(false));
+  }, [jobId]);
 
-  // Handler to fetch a single job’s details and its chord map JSON
-  const viewDetails = async (id) => {
-    try {
-      const detail = await getJob(id);
-      console.log("🔍 Job detail:", detail);
-      setJobDetails(detail);
-
-      // Extract the chord map URL from result
-      const chordMapUrl = detail.result?.["chords map"];
-      if (!chordMapUrl) {
-        console.warn('⚠️ No "chords map" URL found in result');
-        setChordMapData([]);
-        return;
-      }
-
-      // Fetch and store chord map JSON (array of chord objects)
-      const data = await fetchJSON(chordMapUrl);
-      console.log("🎶 Fetched chord map data:", data);
-      setChordMapData(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(`❌ viewDetails error for ${id}:`, err);
-    }
-  };
+  if (loading) return <p>Loading chords…</p>;
 
   return (
-    <div className="App p-4">
-      <section>
-        <h2 className="text-xl font-semibold mb-2">
-          Chord Map 1 section and chord
-        </h2>
-
-        {sectionsData.map((sec, si) => {
-          // grab chords whose time falls in this section
-          const inSection = chordMapData.filter(
-            (c) => c.start >= sec.start && c.start < sec.end
-          );
-
-          return (
-            <div key={si} className="mb-6">
-              <h3 className="font-semibold">{sec.label}</h3>
-
-              {inSection.length ? (
-                <div className="grid grid-cols-4 gap-4 mt-2">
-                  {inSection.map((c, ci) => (
-                    <div key={ci} className="p-2 border rounded text-center">
-                      {formatChord(c.chord_majmin)}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="italic text-sm mt-1">
-                  No chords in this section.
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </section>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Chord Map</h1>
+      {sections.map((sec, i) => {
+        // chords use `start` & `end` timestamps
+        const inSection = chords.filter(
+          (c) => c.start >= sec.start && c.start < sec.end
+        );
+        return (
+          <div key={i} className="mb-6">
+            <h3 className="font-semibold">{sec.label}</h3>
+            {inSection.length ? (
+              <div className="grid grid-cols-4 gap-4 mt-2">
+                {inSection.map((c, ci) => (
+                  <div key={ci} className="p-2 border rounded text-center">
+                    {formatChord(c.chord_majmin)}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="italic text-sm mt-1">No chords in this section.</p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

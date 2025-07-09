@@ -7,8 +7,8 @@ if (!API_KEY) {
 }
 
 /**
- * Fetch all jobs (API jobs endpoint).
- * @returns {Promise<Array<{id: string, status: string}>>}
+ * Fetch all API-created jobs.
+ * @returns {Promise<Array>}
  */
 export async function listJobs() {
   const res = await fetch(`${BASE_URL}/job`, {
@@ -21,8 +21,8 @@ export async function listJobs() {
 }
 
 /**
- * Fetch all workflows (orchestrator runs).
- * @returns {Promise<Array>}
+ * Fetch all workflow definitions.
+ * @returns {Promise<{workflows: Array}>}
  */
 export async function listWorkflows() {
   const res = await fetch(`${BASE_URL}/workflow`, {
@@ -35,7 +35,39 @@ export async function listWorkflows() {
 }
 
 /**
- * Get a job by its ID.
+ * Create a new job to process audio.
+ * @param {string} audioUrl - Public URL of the audio.
+ * @param {string} workflowSlug - Workflow slug identifier.
+ * @param {string} jobName - Human-friendly job name.
+ * @returns {Promise<Object>} The created job object.
+ */
+export async function createJob(audioUrl, workflowSlug, jobName) {
+  const payload = {
+    name: jobName,
+    workflow: workflowSlug,
+    params: { inputUrl: audioUrl }
+  };
+
+  console.log('createJob payload:', payload);
+  const res = await fetch(`${BASE_URL}/job`, {
+    method: 'POST',
+    headers: {
+      Authorization: API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error('createJob error response:', errText);
+    throw new Error(`Failed to create job: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+/**
+ * Fetch a job by its ID.
  * @param {string} id
  * @returns {Promise<Object>}
  */
@@ -50,7 +82,7 @@ export async function getJob(id) {
 }
 
 /**
- * Given a signed URL to a .json file, fetch & parse it.
+ * Fetch and parse JSON from a given URL.
  * @param {string} url
  * @returns {Promise<any>}
  */
