@@ -1,37 +1,68 @@
 // src/Lyrics.jsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { getJob, fetchJSON } from "./api.js";
 
-const TEST_ID = "e2c0244c-02ad-4240-83d8-d9808ea08b18";
-
 export default function Lyrics() {
-  const [lyrics, setLyrics] = useState([]);
+  const { jobId } = useParams();
+  const [lines, setLines] = useState([]); // your lyrics JSON
+  const [chords, setChords] = useState([]); // your chords JSON
+  const [loading, setLoading] = useState(true);
+
+  const formatChord = (chord) => chord.replace(":maj", "").replace(":min", "m");
 
   useEffect(() => {
-    getJob(TEST_ID)
+    setLoading(true);
+    getJob(jobId)
       .then((detail) => {
-        const url = detail.result?.["lyrics aligned"];
-        return url ? fetchJSON(url) : [];
+        const lyricUrl = detail.result.Lyrics; // replace with the actual key
+        const chordUrl = detail.result.chords;
+        return Promise.all([
+          lyricUrl ? fetchJSON(lyricUrl) : Promise.resolve([]),
+          chordUrl ? fetchJSON(chordUrl) : Promise.resolve([]),
+        ]);
       })
-      .then((data) => Array.isArray(data) && setLyrics(data))
-      .catch(console.error);
-  }, []);
+      .then(([rawLines, rawChords]) => {
+        setLines(rawLines);
+        setChords(rawChords);
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, [jobId]);
+
+  if (loading) return <p>Loading lyrics…</p>;
 
   return (
-    <div className="App p-4">
+    <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Lyrics</h1>
-      {lyrics.length ? (
-        <div className="space-y-1">
-          {lyrics.map((line, i) => (
-            <p key={i}>
-              <span className="font-mono text-sm">{line.time}s</span>{" "}
-              {line.text}
-            </p>
-          ))}
-        </div>
-      ) : (
-        <p>No lyrics data.</p>
-      )}
+      <div className="space-y-4 font-mono text-sm">
+        {lines.map((line, i) => (
+          <div key={i}>
+            {/* chord row */}
+            <div className="flex">
+              {line.words.map((w, j) => {
+                // find the chord whose time‐span covers this word
+                const hit = chords.find(
+                  (c) => w.start >= c.start && w.start < c.end
+                );
+                return (
+                  <span key={j} className="px-1 text-xs">
+                    {hit ? formatChord(hit.chord_complex_jazz) : "\u00A0"}
+                  </span>
+                );
+              })}
+            </div>
+            {/* lyric row */}
+            <div className="flex">
+              {line.words.map((w, j) => (
+                <span key={j} className="px-1">
+                  {w.word}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

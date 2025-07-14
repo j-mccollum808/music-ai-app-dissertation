@@ -12,7 +12,7 @@ export default function Jobs() {
   const [loading, setLoading] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState("");
 
-  // Load workflows and API-created jobs
+  // Load workflows (for the dropdown) and API-generated jobs
   useEffect(() => {
     listWorkflows()
       .then((res) => {
@@ -29,17 +29,10 @@ export default function Jobs() {
       .catch((err) => console.error("listJobs error:", err));
   }, []);
 
-  // Upload MP3 to Firebase, then create a Music.AI job
+  // Upload MP3 to Firebase, then kick off the Music.AI job
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) {
-      console.warn("No file selected");
-      return;
-    }
-    if (!selectedWorkflow) {
-      console.warn("No workflow selected");
-      return;
-    }
+    if (!file || !selectedWorkflow) return;
     setLoading(true);
     try {
       const pathRef = ref(storage, `audio-uploads/${Date.now()}-${file.name}`);
@@ -56,21 +49,21 @@ export default function Jobs() {
     }
   };
 
-  // Combine workflows and API jobs for display
-  const runs = [...workflowRuns, ...apiJobs];
+  // 🔥 Only show the API-generated jobs here
+  const runs = apiJobs;
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Jobs</h1>
 
-      {/* Workflow selector and upload form */}
+      {/* Workflow selector + upload form */}
       <form onSubmit={handleSubmit} className="mb-6 space-y-4">
         <div>
           <label className="block font-medium mb-1">Select Workflow:</label>
           <select
             value={selectedWorkflow}
             onChange={(e) => setSelectedWorkflow(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="border p-2 rounded"
             required
           >
             <option value="" disabled>
@@ -102,33 +95,24 @@ export default function Jobs() {
         </div>
       </form>
 
-      {/* Jobs and Workflows list */}
+      {/* Jobs list */}
       {runs.length ? (
         <ul className="space-y-2">
           {runs.map((job) => (
             <li key={job.id} className="flex items-center justify-between">
-              <span className="font-medium">
+              {/* Click on the title to see both chords & lyrics */}
+              <Link
+                to={`/jobs/${job.id}`}
+                className="font-medium text-blue-600 hover:underline"
+              >
                 {job.id} — <em>{job.name || job.status}</em>
-              </span>
-              <div className="space-x-2">
-                <Link
-                  to={`/jobs/${job.id}/chords`}
-                  className="text-blue-600 hover:underline"
-                >
-                  Chords
-                </Link>
-                <Link
-                  to={`/jobs/${job.id}/lyrics`}
-                  className="text-blue-600 hover:underline"
-                >
-                  Lyrics
-                </Link>
-              </div>
+              </Link>
+              <div className="space-x-2"></div>
             </li>
           ))}
         </ul>
       ) : (
-        <p>No jobs or workflows found.</p>
+        <p>No jobs found.</p>
       )}
     </div>
   );
