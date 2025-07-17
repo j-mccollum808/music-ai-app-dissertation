@@ -23,6 +23,12 @@ export default function JobPage() {
         >
           View Lyrics
         </Link>
+        <Link
+          to={`/jobs/${jobId}/lyric-beta`}
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+        >
+          View Lyric Beta
+        </Link>
       </div>
     </div>
   );
