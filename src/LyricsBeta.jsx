@@ -52,18 +52,6 @@ export default function LyricsWithChordMap() {
             return (
               <div key={i} className="mb-2">
                 <div className="flex">
-                  {line.words.map((w, j) => {
-                    const hit = lineChords.find(
-                      (c) => w.start >= c.start && w.start < c.end
-                    );
-                    return (
-                      <span key={j} className="px-1 text-xs">
-                        {hit ? formatChord(hit.chord_complex_jazz) : "\u00A0"}
-                      </span>
-                    );
-                  })}
-                </div>
-                <div className="flex">
                   {line.words.map((w, j) => (
                     <span key={j} className="px-1">
                       {w.word}

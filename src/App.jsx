@@ -4,30 +4,35 @@ import JobPage from "./components/JobsPage.jsx";
 import ChordMapPage from "./ChordMapPage.jsx";
 import Lyrics from "./Lyrics.jsx";
 import LyricsBeta from "./LyricsBeta.jsx";
-import SetlistPage from "./SetlistPage.jsx"; // ✅ renamed or redirected
-import SetlistBuilder from "./SetListBuilder.jsx"; // ✅ note casing
+import SetlistPage from "./SetlistPage.jsx"; //
+import SetlistBuilder from "./SetListBuilder.jsx"; //
 import BackButton from "./components/BackButton.jsx";
+import SetlistDetailPage from "./SetlistDetailPage.jsx";
+import Upload from "./Upload.jsx"; // import at top
+import { BsFillHouseDoorFill } from "react-icons/bs";
+import { BsJournal } from "react-icons/bs";
 
 export default function App() {
   return (
     <BrowserRouter>
-      <nav className="p-4 bg-gray-100 flex space-x-4">
-        <Link to="/" className="font-medium text-gray-800 hover:underline">
-          Home
-        </Link>
-        <Link
-          to="/setlist"
-          className="font-medium text-gray-800 hover:underline"
-        >
-          Setlist
-        </Link>
-        <Link
-          to="/builder"
-          className="font-medium text-gray-800 hover:underline"
-        >
-          Builder
-        </Link>
-        <BackButton />
+      <nav className="p-4 bg-gray-100">
+        <div className="flex justify-between items-center w-full">
+          {/* Left Side */}
+          <BackButton />
+
+          {/* Center */}
+          <Link to="/" className="font-medium text-gray-800 hover:underline">
+            <BsFillHouseDoorFill />
+          </Link>
+
+          {/* Right Side */}
+          <Link
+            to="/setlist"
+            className="font-medium text-gray-800 hover:underline"
+          >
+            <BsJournal />
+          </Link>
+        </div>
       </nav>
 
       <Routes>
@@ -38,9 +43,11 @@ export default function App() {
         <Route path="/jobs/:jobId/lyrics" element={<Lyrics />} />
         <Route path="/jobs/:jobId/lyric-beta" element={<LyricsBeta />} />
         <Route path="/setlist" element={<SetlistPage />} />{" "}
+        <Route path="/upload" element={<Upload />} />
         {/* ✅ Custom setlists */}
         <Route path="/builder" element={<SetlistBuilder />} />{" "}
         {/* ✅ Setlist creation */}
+        <Route path="/setlist/:id" element={<SetlistDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

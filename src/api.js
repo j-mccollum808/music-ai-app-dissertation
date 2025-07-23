@@ -1,4 +1,10 @@
 // src/api.js
+
+import { collection, getDocs, addDoc } from "firebase/firestore";
+import { db } from "./firebase.js";
+import { deleteDoc, doc } from "firebase/firestore"; 
+
+
 const BASE_URL = 'https://api.music.ai/v1';
 const API_KEY = import.meta.env.VITE_MUSIC_AI_KEY;
 
@@ -92,4 +98,37 @@ export async function fetchJSON(url) {
     throw new Error(`Failed to fetch JSON: ${res.status} ${res.statusText}`);
   }
   return res.json();
+}
+
+/**
+ * Create a new setlist in Firestore
+ * @param {{ title: string, songIds: string[] }} payload
+ */
+export async function createSetlist({ title, songIds }) {
+  const docRef = await addDoc(collection(db, "setlists"), {
+    title,
+    songIds,
+    createdAt: Date.now()
+  });
+
+  return { id: docRef.id, title, songIds };
+}
+
+/**
+ * Fetch all setlists from Firestore
+ */
+export async function fetchSetlists() {
+  const snapshot = await getDocs(collection(db, "setlists"));
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+}
+
+/**
+ * Delete a setlist by ID from Firestore
+ * @param {string} id
+ */
+export async function deleteSetlist(id) {
+  await deleteDoc(doc(db, "setlists", id));
 }
