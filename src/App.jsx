@@ -11,6 +11,7 @@ import SetlistDetailPage from "./SetlistDetailPage.jsx";
 import Upload from "./Upload.jsx"; // import at top
 import { BsFillHouseDoorFill } from "react-icons/bs";
 import { BsJournal } from "react-icons/bs";
+import LyricsWithChordMap from "./LyricsWithChordMap.jsx";
 
 export default function App() {
   return (
@@ -38,7 +39,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Jobs />} />
         <Route path="/jobs" element={<Jobs />} />
-        <Route path="/jobs/:jobId" element={<JobPage />} />
         <Route path="/jobs/:jobId/chords" element={<ChordMapPage />} />
         <Route path="/jobs/:jobId/lyrics" element={<Lyrics />} />
         <Route path="/jobs/:jobId/lyric-beta" element={<LyricsBeta />} />
@@ -48,6 +48,7 @@ export default function App() {
         <Route path="/builder" element={<SetlistBuilder />} />{" "}
         {/* ✅ Setlist creation */}
         <Route path="/setlist/:id" element={<SetlistDetailPage />} />
+        <Route path="/jobs/:jobId" element={<LyricsWithChordMap />} />
       </Routes>
     </BrowserRouter>
   );

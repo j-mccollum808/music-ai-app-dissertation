@@ -31,32 +31,38 @@ export default function SetlistDetailPage() {
       {setlist.songIds?.length === 0 ? (
         <p>No songs in this setlist.</p>
       ) : (
-        <ul className="space-y-2">
+        <div className="space-y-2">
           {setlist.songIds.map((jobId) => {
             const job = songMap.get(jobId);
             if (!job) return null;
 
             return (
-              <li key={job.id} className="p-3 border rounded shadow">
-                <p className="font-semibold">{job.name || `Song ${job.id}`}</p>
-                <div className="space-x-2 mt-2">
-                  <Link
-                    to={`/jobs/${job.id}/lyrics`}
-                    className="text-blue-600 underline text-sm"
-                  >
-                    Lyrics
-                  </Link>
-                  <Link
-                    to={`/jobs/${job.id}/chords`}
-                    className="text-green-600 underline text-sm"
-                  >
-                    Chords
-                  </Link>
-                </div>
-              </li>
+              <div
+                key={job.id}
+                className="relative p-4 rounded shadow bg-white hover:bg-gray-50 transition border"
+              >
+                {/* Entire card links to default view */}
+                <Link
+                  to={`/jobs/${job.id}`}
+                  className="block font-semibold text-gray-800 truncate"
+                >
+                  {job.name?.length > 30
+                    ? job.name.slice(0, 30) + "…"
+                    : job.name}
+                </Link>
+
+                {/* Optional: dropdown menu (disabled for now) */}
+                <button
+                  disabled
+                  className="absolute top-2 right-2 px-2 py-1 rounded text-gray-400"
+                  title="More options (coming soon)"
+                >
+                  ⋮
+                </button>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );

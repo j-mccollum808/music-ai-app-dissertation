@@ -34,7 +34,7 @@ export default function ChordMapPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Chord Map</h1>
+      <h1 className="text-2xl font-bold mb-4">Chord Map x</h1>
       {sections.map((sec, i) => {
         const inSection = chords.filter(
           (c) => c.start >= sec.start && c.start < sec.end
@@ -77,7 +77,7 @@ export default function ChordMapPage() {
                   return (
                     <div key={bar} className="p-2 border rounded text-center">
                       <div className="font-semibold mb-1">Bar {bar}</div>
-                      <div>{slots.join(" / ")}</div>
+                      <div className="text-[10px]">{slots.join(" / ")}</div>
                     </div>
                   );
                 })}

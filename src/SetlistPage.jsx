@@ -37,36 +37,37 @@ export default function SetlistPage() {
       ) : (
         <ul className="space-y-2 mb-6">
           {setlists.map((sl) => (
-            <li
-              key={sl.id}
-              className="p-4 border rounded flex items-center justify-between"
-            >
-              <div>
-                <p
-                  onClick={() => navigate(`/setlist/${sl.id}`)}
-                  className="font-semibold text-blue-600 hover:underline cursor-pointer"
-                >
-                  {sl.title}
-                </p>
+            <li key={sl.id}>
+              <div
+                className="flex items-center justify-between p-4 border rounded shadow bg-white hover:bg-gray-50 transition cursor-pointer"
+                onClick={() => navigate(`/setlist/${sl.id}`)}
+              >
+                {/* LEFT: Setlist title and song count */}
+                <div>
+                  <p className="font-semibold text-lg">{sl.title}</p>
+                  <p className="text-sm text-gray-600">
+                    {sl.songIds?.length || 0} songs
+                  </p>
+                </div>
 
-                <p className="font-semibold">{sl.title}</p>
-                <p className="text-sm text-gray-600">
-                  {sl.songIds?.length || 0} songs
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigate(`/builder?id=${sl.id}`)}
-                  className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+                {/* RIGHT: Action buttons */}
+                <div
+                  className="flex gap-2"
+                  onClick={(e) => e.stopPropagation()} // prevent card click
                 >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(sl.id)}
-                  className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                >
-                  Delete
-                </button>
+                  <button
+                    onClick={() => navigate(`/builder?id=${sl.id}`)}
+                    className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(sl.id)}
+                    className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </li>
           ))}
