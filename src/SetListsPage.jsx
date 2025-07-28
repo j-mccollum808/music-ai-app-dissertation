@@ -65,6 +65,7 @@ export default function SetlistsPage() {
 
   return (
     <div className="p-4">
+      SetListPage.jsx
       <h1 className="text-2xl font-bold mb-4">Setlists</h1>
       <div className="space-y-4 mb-6">
         {setlists.map((sl) => (
@@ -91,7 +92,6 @@ export default function SetlistsPage() {
       >
         + ADD
       </button>
-
       {showModal && (
         <Modal onClose={() => setShowModal(false)}>
           <h2 className="text-xl font-bold mb-4">

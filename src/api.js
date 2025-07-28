@@ -1,8 +1,14 @@
 // src/api.js
 
-import { collection, getDocs, addDoc } from "firebase/firestore";
-import { db } from "./firebase.js";
-import { deleteDoc, doc } from "firebase/firestore"; 
+import {
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc
+} from "firebase/firestore";import { db } from "./firebase.js";
 
 
 const BASE_URL = 'https://api.music.ai/v1';
@@ -132,3 +138,50 @@ export async function fetchSetlists() {
 export async function deleteSetlist(id) {
   await deleteDoc(doc(db, "setlists", id));
 }
+
+/**
+ * Delete a job by ID.
+ * @param {string} id
+ * @returns {Promise<void>}
+ */
+export async function deleteJob(id) {
+  const res = await fetch(`${BASE_URL}/job/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: API_KEY }
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to delete job ${id}: ${res.status} ${res.statusText}`);
+  }
+}
+
+/**
+ * Fetch a single setlist by ID.
+ * @param {string} id
+ * @returns {Promise<Object>}
+ */
+export async function getSetlist(id) {
+  const ref = doc(db, "setlists", id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    throw new Error(`Setlist not found: ${id}`);
+  }
+
+  return { id: snap.id, ...snap.data() };
+}
+
+/**
+ * Update an existing setlist.
+ * @param {string} id
+ * @param {Object} payload
+ * @returns {Promise<Object>}
+ */
+export async function updateSetlist(id, payload) {
+  const ref = doc(db, "setlists", id);
+  await updateDoc(ref, {
+    ...payload,
+    updatedAt: Date.now(),
+  });
+  return { id, ...payload };
+}
+

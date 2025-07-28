@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 export default function SetlistPage() {
   const [setlists, setSetlists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,10 +17,10 @@ export default function SetlistPage() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this setlist?")) return;
-
     try {
       await deleteSetlist(id);
       setSetlists((prev) => prev.filter((sl) => sl.id !== id));
+      setOpenMenuId(null);
     } catch (err) {
       console.error("Failed to delete setlist:", err);
       alert("Failed to delete. See console for details.");
@@ -30,8 +31,8 @@ export default function SetlistPage() {
 
   return (
     <div className="p-4">
+      setlistpage.jsx
       <h1 className="text-2xl font-bold mb-4">Setlists</h1>
-
       {setlists.length === 0 ? (
         <p>No setlists created yet.</p>
       ) : (
@@ -39,7 +40,7 @@ export default function SetlistPage() {
           {setlists.map((sl) => (
             <li key={sl.id}>
               <div
-                className="flex items-center justify-between p-4 border rounded shadow bg-white hover:bg-gray-50 transition cursor-pointer"
+                className="flex items-center justify-between p-4 border rounded shadow bg-white hover:bg-gray-50 transition relative"
                 onClick={() => navigate(`/setlist/${sl.id}`)}
               >
                 {/* LEFT: Setlist title and song count */}
@@ -50,30 +51,42 @@ export default function SetlistPage() {
                   </p>
                 </div>
 
-                {/* RIGHT: Action buttons */}
-                <div
-                  className="flex gap-2"
-                  onClick={(e) => e.stopPropagation()} // prevent card click
-                >
+                {/* RIGHT: Action menu */}
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={() => navigate(`/builder?id=${sl.id}`)}
-                    className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+                    onClick={() =>
+                      setOpenMenuId(openMenuId === sl.id ? null : sl.id)
+                    }
+                    className="text-xl px-2 py-1 rounded hover:bg-gray-200"
                   >
-                    Edit
+                    ⋯
                   </button>
-                  <button
-                    onClick={() => handleDelete(sl.id)}
-                    className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
+
+                  {openMenuId === sl.id && (
+                    <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-md z-10">
+                      <button
+                        onClick={() => {
+                          navigate(`/builder?id=${sl.id}`);
+                          setOpenMenuId(null);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(sl.id)}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </li>
           ))}
         </ul>
       )}
-
       <button
         className="w-full py-3 bg-blue-600 text-white rounded font-semibold"
         onClick={() => navigate("/builder")}

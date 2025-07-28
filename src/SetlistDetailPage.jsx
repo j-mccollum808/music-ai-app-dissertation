@@ -1,6 +1,6 @@
 // src/SetlistDetailPage.jsx
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { fetchSetlists, listJobs } from "./api.js";
 
 export default function SetlistDetailPage() {
@@ -8,6 +8,7 @@ export default function SetlistDetailPage() {
   const [setlist, setSetlist] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     Promise.all([fetchSetlists(), listJobs()])
@@ -27,6 +28,12 @@ export default function SetlistDetailPage() {
 
   return (
     <div className="p-4">
+      <button
+        onClick={() => navigate(-1)}
+        className="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+      >
+        ← Back
+      </button>
       <h1 className="text-2xl font-bold mb-4">{setlist.title}</h1>
       {setlist.songIds?.length === 0 ? (
         <p>No songs in this setlist.</p>
