@@ -1,8 +1,5 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Jobs from "./jobs.jsx";
-import JobPage from "./components/JobsPage.jsx";
-import Lyrics from "./Lyrics.jsx";
-import LyricsBeta from "./LyricsBeta.jsx";
 import SetlistPage from "./SetlistPage.jsx"; //
 import SetlistBuilder from "./SetListBuilder.jsx"; //
 import BackButton from "./components/BackButton.jsx";
@@ -12,7 +9,7 @@ import { BsFillHouseDoorFill } from "react-icons/bs";
 import { BsJournal } from "react-icons/bs";
 import LyricsWithChordMap from "./ChordMap.jsx";
 import SettingsPage from "./SettingsPage.jsx";
-import LyricsOnly from "./LyricsOnly.jsx";
+import { IoIosSettings } from "react-icons/io";
 
 export default function App() {
   return (
@@ -34,7 +31,7 @@ export default function App() {
             to="/settings"
             className="font-medium text-gray-800 hover:underline"
           >
-            Settings
+            <IoIosSettings />
           </Link>
         </div>
       </nav>
@@ -42,8 +39,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Jobs />} />
         <Route path="/jobs" element={<Jobs />} />
-        <Route path="/jobs/:jobId/lyrics-only" element={<LyricsOnly />} />
-        <Route path="/jobs/:jobId/lyric-beta" element={<LyricsBeta />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/setlist" element={<SetlistPage />} />{" "}
         <Route path="/upload" element={<Upload />} />

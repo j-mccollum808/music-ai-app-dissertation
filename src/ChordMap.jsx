@@ -5,6 +5,7 @@ import { useChordView } from "./contexts/ChordViewContext.jsx";
 
 export default function LyricsWithChordMap() {
   const { jobId } = useParams();
+  const [jobTitle, setJobTitle] = useState("");
   const [sections, setSections] = useState([]);
   const [lines, setLines] = useState([]);
   const [chords, setChords] = useState([]);
@@ -12,7 +13,7 @@ export default function LyricsWithChordMap() {
   const navigate = useNavigate();
   const [adjustedChords, setAdjustedChords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("both"); // ← default to both
+  const [view, setView] = useState("both");
 
   const formatChord = (chordObj) => {
     const key = `chord_${simplification}_pop`;
@@ -24,6 +25,7 @@ export default function LyricsWithChordMap() {
     setLoading(true);
     getJob(jobId)
       .then((detail) => {
+        setJobTitle(detail.name || jobId);
         const secUrl = detail.result?.Sections;
         const lyricUrl = detail.result?.Lyrics;
         const chordUrl = detail.result?.chords;
@@ -38,19 +40,11 @@ export default function LyricsWithChordMap() {
         setLines(Array.isArray(rawLines) ? rawLines : []);
         setChords(Array.isArray(rawChords) ? rawChords : []);
 
-        const histogram = rawChords.reduce((acc, c) => {
-          acc[c.start_beat] = (acc[c.start_beat] || 0) + 1;
-          return acc;
-        }, {});
-        const mostCommon = Object.entries(histogram).sort(
-          (a, b) => b[1] - a[1]
-        )[0]?.[0];
-        const shift = (4 + 1 - Number(mostCommon)) % 4;
+        // Removed global histogram and shift logic as section-based shifting is used now
+        // Shift now applied per section in the rendering logic
 
-        const normalized = rawChords.map((c) => ({
-          ...c,
-          adjusted_start_beat: ((c.start_beat - 1 + shift) % 4) + 1,
-        }));
+        const normalized = rawChords.map((c) => ({ ...c }));
+        console.log("✅ Loaded chords:", normalized);
 
         setAdjustedChords(normalized);
       })
@@ -61,7 +55,8 @@ export default function LyricsWithChordMap() {
   if (loading) return <p>Loading…</p>;
 
   return (
-    <div className="p-4">
+    <div className="p-4 max-w-screen-sm mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Song: {jobTitle}</h1>
       <button
         onClick={() => navigate(-1)}
         className="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
@@ -93,40 +88,60 @@ export default function LyricsWithChordMap() {
         </p>
       </div>
 
-      <div className={view === "both" ? "grid grid-cols-2 gap-8" : ""}>
-        {/* ── Lyrics ── */}
+      <div
+        className={
+          view === "both" ? "grid grid-cols-1 md:grid-cols-2 gap-8" : ""
+        }
+      >
+        {/* Lyrics */}
         {(view === "both" || view === "lyrics") && (
-          <div>
+          <div className="w-full">
             <h2 className="text-xl font-bold mb-4">Lyrics</h2>
-            <div className="space-y-4 font-mono text-sm">
-              {lines.map((line, i) => {
-                const lineChords = adjustedChords.filter(
-                  (c) => c.start >= line.start && c.start < line.end
+            <div className="space-y-4 font-mono">
+              {sections.map((section, si) => {
+                const linesInSection = lines.filter(
+                  (line) =>
+                    line.start >= section.start && line.start < section.end
                 );
+                if (linesInSection.length === 0) return null;
                 return (
-                  <div key={i} className="mb-2">
-                    {view !== "lyrics" && (
-                      <div className="flex">
-                        {line.words?.map((w, j) => {
-                          const hit = lineChords.find(
-                            (c) => w.start >= c.start && w.start < c.end
-                          );
-                          return (
-                            <span key={j} className="px-1 text-xs">
-                              {hit ? formatChord(hit) : "\u00A0"}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="flex">
-                      {line.words
-                        ? line.words.map((w, j) => (
-                            <span key={j} className="px-1">
-                              {w.word}
-                            </span>
-                          ))
-                        : line.text}
+                  <div key={si} className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2">
+                      {section.label}
+                    </h3>
+                    <div className="space-y-2">
+                      {linesInSection.map((line, li) => {
+                        const lineChords = adjustedChords.filter(
+                          (c) => c.start >= line.start && c.start < line.end
+                        );
+                        return (
+                          <div key={li}>
+                            {view !== "lyrics" && (
+                              <div className="flex flex-wrap">
+                                {line.words?.map((w, j) => {
+                                  const hit = lineChords.find(
+                                    (c) => w.start >= c.start && w.start < c.end
+                                  );
+                                  return (
+                                    <span key={j} className="px-1 text-xs">
+                                      {hit ? formatChord(hit) : "\u00A0"}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <div className="flex flex-wrap">
+                              {line.words
+                                ? line.words.map((w, j) => (
+                                    <span key={j} className="px-1">
+                                      {w.word}
+                                    </span>
+                                  ))
+                                : line.text}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -135,9 +150,9 @@ export default function LyricsWithChordMap() {
           </div>
         )}
 
-        {/* ── Chord Map ── */}
+        {/* Chord Map */}
         {(view === "both" || view === "chords") && (
-          <div>
+          <div className="w-full">
             <h2 className="text-xl font-bold mb-4">
               Normalized Chord Map{" "}
               <span className="text-sm">
@@ -148,61 +163,139 @@ export default function LyricsWithChordMap() {
               const inSec = adjustedChords.filter(
                 (c) => c.start >= sec.start && c.start < sec.end
               );
-              const byBar = inSec.reduce((acc, c) => {
-                acc[c.start_bar] = acc[c.start_bar] || [];
-                acc[c.start_bar].push(c);
+
+              inSec.forEach((c, i) => {
+                if (typeof c.start_beat !== "number" || isNaN(c.start_beat)) {
+                  console.warn(
+                    `⚠️ Missing start_beat in section "${sec.label}" at index ${i}`,
+                    c
+                  );
+                }
+              });
+
+              const beatCounts = inSec.reduce((acc, c) => {
+                acc[c.start_beat] = (acc[c.start_beat] || 0) + 1;
                 return acc;
               }, {});
-              const bars = Object.keys(byBar)
-                .map(Number)
-                .sort((a, b) => a - b);
+              const mostCommon = Object.entries(beatCounts).sort(
+                (a, b) => b[1] - a[1]
+              )[0]?.[0];
+              const sectionShift = mostCommon
+                ? (4 + 1 - Number(mostCommon)) % 4
+                : 0;
+              if (!mostCommon) {
+                console.warn(
+                  `⚠️ Section "${sec.label}" has no valid start_beat values. Defaulting shift to 0.`
+                );
+              }
+              console.log(
+                `Section: ${sec.label} | Most common beat: ${mostCommon}`
+              );
+              const byBar = inSec.reduce((acc, c) => {
+                for (let i = c.start_bar; i <= c.end_bar; i++) {
+                  acc[i] = acc[i] || [];
+                  acc[i].push(c);
+                }
+                return acc;
+              }, {});
+
+              const barNums = Object.keys(byBar).map(Number);
+              if (barNums.length === 0)
+                return (
+                  <p key={si} className="italic text-sm mt-1">
+                    No chords in this section.
+                  </p>
+                );
+
+              const minBar = Math.min(...barNums);
+              const maxBar = Math.max(...barNums);
+              const allBars = Array.from(
+                { length: maxBar - minBar + 1 },
+                (_, i) => minBar + i
+              );
+              const barStrings = {};
+              const bars = allBars.map((bar) => {
+                const slots = Array(4).fill("–");
+                (byBar[bar] || []).forEach((c) => {
+                  const beat =
+                    ((c.start_beat - Number(mostCommon) + 4) % 4) + 1;
+                  slots[beat - 1] = formatChord(c);
+                });
+                barStrings[bar] = slots.join(" / ");
+                return bar;
+              });
+
+              const barChunks = [];
+              for (let i = 0; i < bars.length; i += 4) {
+                barChunks.push(bars.slice(i, i + 4));
+              }
+
+              let lastBarContent = "";
 
               return (
                 <div key={si} className="mb-6">
                   <h3 className="font-semibold">{sec.label}</h3>
-                  {bars.length ? (
-                    <div className="grid grid-cols-4 gap-0 mt-2">
-                      {bars.map((bar) => {
+                  {barChunks.map((chunk, rowIndex) => (
+                    <div key={rowIndex} className="grid grid-cols-4 gap-2 mb-2">
+                      {chunk.map((bar) => {
                         const slots = Array(4).fill("–");
-                        byBar[bar].forEach((c) => {
-                          const beat = c.adjusted_start_beat;
+                        (byBar[bar] || []).forEach((c) => {
+                          const beat =
+                            ((c.start_beat - Number(mostCommon) + 4) % 4) + 1;
+                          console.log(
+                            `Chord '${formatChord(c)}' | Bar ${
+                              bar + 1
+                            } | Adjusted Beat: ${beat}`
+                          );
                           slots[beat - 1] = formatChord(c);
                         });
+
+                        const display = (() => {
+                          const filled = slots.filter((s) => s !== "–");
+                          const content =
+                            filled.length === 1 && slots[0] !== "–"
+                              ? slots[0]
+                              : filled.length === 2 &&
+                                slots[0] !== "–" &&
+                                slots[2] !== "–" &&
+                                slots[1] === "–" &&
+                                slots[3] === "–"
+                              ? `${slots[0]} ${slots[2]}`
+                              : slots.join(" / ");
+
+                          if (content === lastBarContent) {
+                            return "%";
+                          } else {
+                            lastBarContent = content;
+                            return content;
+                          }
+                        })();
+
                         return (
                           <div
                             key={bar}
                             className="relative p-2 border text-center"
                           >
                             <div className="absolute top-1 left-1 text-[10px] font-semibold text-gray-500 text-left">
-                              Bar {bar}
+                              Bar {bar + 1}
                             </div>
-                            <div className="pt-4 text-[10px]">
-                              {(() => {
-                                const filled = slots.filter((s) => s !== "–");
-                                if (filled.length === 1 && slots[0] !== "–") {
-                                  return slots[0];
-                                } else if (
-                                  filled.length === 2 &&
-                                  slots[0] !== "–" &&
-                                  slots[2] !== "–" &&
-                                  slots[1] === "–" &&
-                                  slots[3] === "–"
-                                ) {
-                                  return `${slots[0]} ${slots[2]}`;
-                                } else {
-                                  return slots.join(" / ");
-                                }
-                              })()}
-                            </div>
+                            <div className="pt-4 text-[10px]">{display}</div>
                           </div>
                         );
                       })}
+                      {chunk.length < 4 &&
+                        Array.from({ length: 4 - chunk.length }).map(
+                          (_, idx) => (
+                            <div
+                              key={`empty-${idx}`}
+                              className="p-2 border text-center opacity-0"
+                            >
+                              Empty
+                            </div>
+                          )
+                        )}
                     </div>
-                  ) : (
-                    <p className="italic text-sm mt-1">
-                      No chords in this section.
-                    </p>
-                  )}
+                  ))}
                 </div>
               );
             })}
