@@ -10,27 +10,27 @@ import { BsJournal } from "react-icons/bs";
 import LyricsWithChordMap from "./ChordMap.jsx";
 import SettingsPage from "./SettingsPage.jsx";
 import { IoIosSettings } from "react-icons/io";
+import YouTubeToChords from "./components/YouTubeToChords.jsx";
+import { FaYoutube } from "react-icons/fa";
 
 export default function App() {
   return (
     <BrowserRouter>
       <nav className="p-4 bg-gray-100">
-        <div className="flex justify-center items-center space-x-25">
-          {/* Center */}
-
-          <Link
-            to="/setlist"
-            className="font-medium text-gray-800 hover:underline"
-          >
+        <div className="flex justify-center items-center space-x-10 text-xl">
+          <Link to="/setlist" className="text-gray-800 hover:text-blue-600">
             <BsJournal />
           </Link>
-          <Link to="/" className="font-medium text-gray-800 hover:underline">
+          <Link to="/" className="text-gray-800 hover:text-blue-600">
             <BsFillHouseDoorFill />
           </Link>
           <Link
-            to="/settings"
-            className="font-medium text-gray-800 hover:underline"
+            to="/youtube-to-chords"
+            className="text-gray-800 hover:text-red-600"
           >
+            <FaYoutube />
+          </Link>
+          <Link to="/settings" className="text-gray-800 hover:text-blue-600">
             <IoIosSettings />
           </Link>
         </div>
@@ -38,6 +38,7 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<Jobs />} />
+        <Route path="/youtube-to-chords" element={<YouTubeToChords />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/setlist" element={<SetlistPage />} />{" "}
