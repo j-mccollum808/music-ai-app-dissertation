@@ -7,8 +7,11 @@ import {
   doc,
   getDoc,
   updateDoc,
+  setDoc,
   deleteDoc
-} from "firebase/firestore";import { db } from "./firebase.js";
+} from "firebase/firestore";
+import { db } from "./firebase.js";
+
 
 
 const BASE_URL = 'https://api.music.ai/v1';
@@ -93,17 +96,23 @@ export async function getJob(id) {
   return res.json();
 }
 
-/**
- * Fetch and parse JSON from a given URL.
- * @param {string} url
- * @returns {Promise<any>}
- */
 export async function fetchJSON(url) {
   const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch JSON: ${res.status} ${res.statusText}`);
+  const contentType = res.headers.get("Content-Type");
+
+  if (!res.ok || !contentType?.includes("application/json")) {
+    const text = await res.text();
+    console.error("❌ fetchJSON failed. Response was not JSON. Sample:", text.slice(0, 300));
+    throw new Error("Invalid JSON response.");
   }
-  return res.json();
+
+  try {
+    return await res.json();
+  } catch (err) {
+    const text = await res.text();
+    console.error("❌ Failed to parse JSON. Response body:", text.slice(0, 300));
+    throw new Error("JSON parse error.");
+  }
 }
 
 /**
@@ -185,3 +194,67 @@ export async function updateSetlist(id, payload) {
   return { id, ...payload };
 }
 
+const YT_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+
+export async function searchYouTube(query) {
+  const res = await fetch(
+    `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(query)}&key=${YT_API_KEY}`
+  );
+
+  if (!res.ok) throw new Error("YouTube API search failed");
+
+  return res.json();
+}
+
+
+
+/**
+ * Given a job, fetch the chords.json output
+ */
+export async function getChordOutput(job) {
+  if (!job?.outputs) throw new Error("No job outputs found.");
+  const output = job.outputs.find((o) => o.name === "chords.json");
+  if (!output) throw new Error("chords.json not found.");
+  const res = await fetch(output.file.url);
+  return await res.json();
+}
+
+/**
+ * Given a job, fetch the lyrics.json output
+ */
+export async function getLyricOutput(job) {
+  if (!job?.outputs) throw new Error("No job outputs found.");
+  const output = job.outputs.find((o) => o.name === "lyrics.json");
+  if (!output) throw new Error("lyrics.json not found.");
+  const res = await fetch(output.file.url);
+  return await res.json();
+}
+
+/**
+ * Given a job, fetch the sections.json output
+ */
+export async function getSectionsOutput(job) {
+  if (!job?.outputs) throw new Error("No job outputs found.");
+  const output = job.outputs.find((o) => o.name === "sections.json");
+  if (!output) throw new Error("sections.json not found.");
+  const res = await fetch(output.file.url);
+  return await res.json();
+}
+
+
+
+// ...
+export async function saveJobResultToFirestore(job) {
+  const jobId = job.id;
+
+  const jobDoc = doc(db, "songs", jobId); // This sets songs/{jobId}
+  await setDoc(jobDoc, {
+    jobId,
+    name: job.name || "",
+    status: job.status,
+    createdAt: Date.now(),
+    sections: job.result?.Sections || null,
+    lyrics: job.result?.Lyrics || null,
+    chords: job.result?.chords || null,
+  });
+}

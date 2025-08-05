@@ -1,9 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase.js";
-import { listWorkflows, createJob } from "./api.js";
+import {
+  listWorkflows,
+  createJob,
+  getJob,
+  saveJobResultToFirestore,
+} from "./api.js";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+
+// ✅ Updated job polling logic
+const waitForJobCompletion = async (jobId, maxRetries = 40, delay = 3000) => {
+  for (let i = 0; i < maxRetries; i++) {
+    const job = await getJob(jobId);
+    console.log(
+      `⏳ Waiting for job ${jobId}... (${i + 1}/${maxRetries}) → status: ${
+        job.status
+      }`
+    );
+
+    if (["SUCCEEDED", "complete"].includes(job.status)) {
+      if (!job.result) {
+        console.warn("⚠️ Job marked complete but missing result:", job);
+        throw new Error("Job completed but no result was returned.");
+      }
+
+      console.log("✅ Job complete:", job);
+      console.log("🎯 Sections:", job.result?.Sections);
+      console.log("🎯 Lyrics:", job.result?.Lyrics);
+      console.log("🎯 Chords:", job.result?.chords);
+
+      return job;
+    }
+
+    if (["FAILED", "errored", "failed"].includes(job.status)) {
+      console.error("❌ Job failed:", job);
+      throw new Error(`Job failed with status: ${job.status}`);
+    }
+
+    await new Promise((res) => setTimeout(res, delay));
+  }
+
+  throw new Error("Job did not complete in time.");
+};
 
 export default function Upload() {
   const [workflowRuns, setWorkflowRuns] = useState([]);
@@ -27,14 +66,29 @@ export default function Upload() {
     if (!file || !selectedWorkflow) return;
     setLoading(true);
     try {
+      console.log("⬆️ Uploading file to Firebase Storage...");
       const pathRef = ref(storage, `audio-uploads/${Date.now()}-${file.name}`);
       await uploadBytes(pathRef, file);
       const publicUrl = await getDownloadURL(pathRef);
+      console.log("✅ File uploaded:", publicUrl);
+
       const newJob = await createJob(publicUrl, selectedWorkflow, file.name);
+      console.log("🚀 Music.AI job created:", newJob);
+
+      const debugJob = await getJob(newJob.id);
+      console.log("🔍 Job right after creation:", debugJob);
+
+      try {
+        const completedJob = await waitForJobCompletion(newJob.id);
+        await saveJobResultToFirestore(completedJob);
+        console.log("📦 Saved job result to Firestore.");
+      } catch (err) {
+        console.error("❌ Saving job result failed:", err);
+      }
 
       navigate(`/jobs/${newJob.id}`);
     } catch (err) {
-      console.error("Upload or job creation failed:", err);
+      console.error("❌ Upload or job creation failed:", err);
     } finally {
       setLoading(false);
     }
