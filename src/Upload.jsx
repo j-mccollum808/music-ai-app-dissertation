@@ -104,7 +104,7 @@ export default function Upload() {
           <select
             value={selectedWorkflow}
             onChange={(e) => setSelectedWorkflow(e.target.value)}
-            className="border p-2 rounded w-full"
+            className="border border-gray-600 bg-black text-white p-2 rounded w-full"
             required
           >
             <option value="" disabled>
@@ -123,13 +123,13 @@ export default function Upload() {
             type="file"
             accept="audio/*"
             onChange={(e) => setFile(e.target.files[0])}
-            className="border p-2 rounded w-full"
+            className="border border-gray-600 bg-black text-white p-2 rounded w-full"
             required
           />
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            className="px-4 py-2 bg-[#00FF9F] text-black font-semibold rounded hover:opacity-90 disabled:opacity-50"
           >
             {loading ? "Uploading…" : "Upload & Run"}
           </button>

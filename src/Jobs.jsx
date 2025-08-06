@@ -1,7 +1,8 @@
 // src/Jobs.jsx
 import { useState, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "./firebase.js";
+import { doc, updateDoc } from "firebase/firestore";
+import { storage, db } from "./firebase.js";
 import { listWorkflows, listJobs, createJob, deleteJob } from "./api.js";
 import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
@@ -10,43 +11,29 @@ import { useDebounce } from "react-use";
 export default function Jobs() {
   const [editingJobId, setEditingJobId] = useState(null);
   const [editedName, setEditedName] = useState("");
-
   const [workflowRuns, setWorkflowRuns] = useState([]);
   const [apiJobs, setApiJobs] = useState([]);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState("");
-  const [menuOpenId, setMenuOpenId] = useState(null); // ← this is the missing line
-
+  const [menuOpenId, setMenuOpenId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
-  useDebounce(
-    () => {
-      setDebouncedSearchTerm(searchTerm);
-    },
-    500,
-    [searchTerm]
-  );
+  useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
 
-  // Load workflows (for the dropdown) and API-generated jobs
   useEffect(() => {
-    listWorkflows()
-      .then((res) => {
-        const runs = Array.isArray(res.workflows) ? res.workflows : [];
-        setWorkflowRuns(runs);
-        if (runs.length) setSelectedWorkflow(runs[0].slug);
-      })
-      .catch((err) => console.error("listWorkflows error:", err));
+    listWorkflows().then((res) => {
+      const runs = Array.isArray(res.workflows) ? res.workflows : [];
+      setWorkflowRuns(runs);
+      if (runs.length) setSelectedWorkflow(runs[0].slug);
+    });
 
-    listJobs()
-      .then((res) => {
-        setApiJobs(Array.isArray(res) ? res : []);
-      })
-      .catch((err) => console.error("listJobs error:", err));
+    listJobs().then((res) => {
+      setApiJobs(Array.isArray(res) ? res : []);
+    });
   }, []);
 
-  // Upload MP3 to Firebase, then kick off the Music.AI job
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file || !selectedWorkflow) return;
@@ -55,7 +42,6 @@ export default function Jobs() {
       const pathRef = ref(storage, `audio-uploads/${Date.now()}-${file.name}`);
       await uploadBytes(pathRef, file);
       const publicUrl = await getDownloadURL(pathRef);
-
       const newJob = await createJob(publicUrl, selectedWorkflow, file.name);
       setApiJobs((prev) => [newJob, ...prev]);
       setFile(null);
@@ -66,6 +52,12 @@ export default function Jobs() {
     }
   };
 
+  const updateJobName = async (jobId, newName) => {
+    const jobRef = doc(db, "songs", jobId);
+    await updateDoc(jobRef, { name: newName });
+    return { ...apiJobs.find((j) => j.id === jobId), name: newName };
+  };
+
   const runs = apiJobs.filter((job) => {
     const name = job.name?.toLowerCase() || "";
     const status = job.status?.toLowerCase() || "";
@@ -74,13 +66,15 @@ export default function Jobs() {
       status.includes(debouncedSearchTerm.toLowerCase())
     );
   });
+
   return (
-    <div className="p-4">
+    <div className="p-4 bg-black min-h-screen text-white">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Songs</h1>
         <Link
           to="/upload"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+          className="px-4 py-2 rounded text-black"
+          style={{ backgroundColor: "#00FF9F" }}
         >
           + Upload
         </Link>
@@ -93,12 +87,10 @@ export default function Jobs() {
           placeholder="Search songs..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border rounded"
+          className="w-full pl-10 pr-4 py-2 border rounded bg-gray-900 text-white border-gray-700"
         />
       </div>
 
-      {/* Workflow selector + upload form */}
-      {/* Jobs list */}
       {runs.length ? (
         <div className="space-y-2">
           {runs.map((job) => {
@@ -132,20 +124,20 @@ export default function Jobs() {
             return (
               <div
                 key={job.id}
-                className="relative p-4 rounded shadow bg-white hover:bg-gray-50 transition border"
+                className="relative p-4 rounded-lg bg-gray-900 text-white border border-gray-700 shadow"
               >
-                {/* Job name OR editable input */}
                 {isEditing ? (
                   <div className="flex items-center space-x-2">
                     <input
                       type="text"
                       value={editedName}
                       onChange={(e) => setEditedName(e.target.value)}
-                      className="border px-2 py-1 rounded w-full"
+                      className="border px-2 py-1 rounded w-full bg-gray-800 text-white border-gray-600"
                     />
                     <button
                       onClick={handleSaveRename}
-                      className="text-green-600 font-medium"
+                      className="text-black px-3 py-1 rounded"
+                      style={{ backgroundColor: "#00FF9F" }}
                     >
                       Save
                     </button>
@@ -154,7 +146,7 @@ export default function Jobs() {
                         setEditingJobId(null);
                         setMenuOpenId(null);
                       }}
-                      className="text-gray-500"
+                      className="text-gray-400"
                     >
                       Cancel
                     </button>
@@ -162,7 +154,7 @@ export default function Jobs() {
                 ) : (
                   <Link
                     to={`/jobs/${job.id}`}
-                    className="block font-semibold text-gray-800 truncate"
+                    className="block font-semibold truncate hover:underline"
                   >
                     {job.name?.length > 30
                       ? job.name.slice(0, 30) + "…"
@@ -170,26 +162,34 @@ export default function Jobs() {
                   </Link>
                 )}
 
-                {/* More button */}
                 {!isEditing && (
                   <button
                     onClick={() =>
                       setMenuOpenId((prev) => (prev === job.id ? null : job.id))
                     }
-                    className="absolute top-2 right-2 px-2 py-1 rounded hover:bg-gray-200"
+                    className="absolute top-2 right-2 px-2 py-1 rounded hover:bg-gray-800"
                   >
                     ⋮
                   </button>
                 )}
 
-                {/* Dropdown menu */}
                 {isOpen && !isEditing && (
-                  <div className="absolute top-10 right-2 w-40 bg-white border rounded shadow-lg z-10">
+                  <div className="absolute top-10 right-2 w-40 bg-gray-800 border border-gray-600 rounded shadow-lg z-10">
                     <button
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-700"
+                      onClick={() => {
+                        setEditingJobId(job.id);
+                        setEditedName(job.name || "");
+                        setMenuOpenId(null);
+                      }}
+                    >
+                      ✏️ Rename
+                    </button>
+                    <button
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-700 text-red-500"
                       onClick={handleDelete}
                     >
-                      Delete
+                      🗑 Delete
                     </button>
                   </div>
                 )}
@@ -198,7 +198,7 @@ export default function Jobs() {
           })}
         </div>
       ) : (
-        <p>No jobs found.</p>
+        <p className="text-gray-400">No jobs found.</p>
       )}
     </div>
   );
