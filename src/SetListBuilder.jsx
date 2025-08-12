@@ -74,7 +74,6 @@ export default function SetlistBuilder() {
 
   return (
     <div className="p-6">
-      setlistbuilder.jsx
       <h1 className="text-2xl font-bold mb-6">Setlist Builder</h1>
       <button
         onClick={() => navigate(-1)}
@@ -103,7 +102,6 @@ export default function SetlistBuilder() {
               <p className="font-semibold text-gray-800 truncate">
                 {song.name || `Song ${song.id}`}
               </p>
-              <p className="text-sm text-gray-500">{song.status}</p>
 
               {isSelected && (
                 <div className="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full text-white flex items-center justify-center text-xs">
@@ -118,7 +116,7 @@ export default function SetlistBuilder() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+          className="px-4 py-2 bg-[#00FF9F] text-black rounded disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save Setlist"}
         </button>

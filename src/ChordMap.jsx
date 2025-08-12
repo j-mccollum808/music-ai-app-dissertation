@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getJob, fetchJSON } from "./api";
 import { useChordView } from "./contexts/ChordViewContext";
+
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 export default function ChordMap() {
   const { jobId } = useParams();
   const navigate = useNavigate();
-  const { simplification } = useChordView();
+  const { simplification, setSimplification } = useChordView(); // already here
 
   const [sections, setSections] = useState([]);
   const [lines, setLines] = useState([]);
@@ -94,6 +95,18 @@ export default function ChordMap() {
       >
         ← Back
       </button>
+      <div className="mb-4">
+        <label className="block mb-1 font-medium">Chord Complexity:</label>
+        <select
+          value={simplification}
+          onChange={(e) => setSimplification(e.target.value)}
+          className="border p-2 rounded"
+        >
+          <option value="basic">Basic</option>
+          <option value="simple">Simple</option>
+          <option value="complex">Complex</option>
+        </select>
+      </div>
 
       {/* View selector */}
       <div className="mb-6 space-x-2">

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import Jobs from "./jobs.jsx";
+import Jobs from "./SongsPage.jsx";
 import SetlistPage from "./SetlistPage.jsx";
 import SetlistBuilder from "./SetListBuilder.jsx";
 import BackButton from "./components/BackButton.jsx";
@@ -18,21 +18,16 @@ export default function App() {
       <div className="min-h-screen bg-black text-white">
         <nav className="p-4 bg-black border-b border-gray-700">
           <div className="flex justify-center items-center space-x-10 text-2xl">
-            <Link to="/setlist" className="text-white hover:text-[#00FF9F]">
-              <BsJournal />
-            </Link>
             <Link to="/" className="text-white hover:text-[#00FF9F]">
               <BsFillHouseDoorFill />
             </Link>
-            <Link
-              to="/youtube-to-chords"
-              className="text-white hover:text-[#FF0000]"
-            >
-              <FaYoutube />
+            <Link to="/setlist" className="text-white hover:text-[#00FF9F]">
+              <BsJournal />
             </Link>
-            <Link to="/settings" className="text-white hover:text-[#00FF9F]">
-              <IoIosSettings />
-            </Link>
+
+            {/* <Link to="/settings" className="text-white hover:text-[#00FF9F]">
+            IoIosSettings />
+            </Link> */}
           </div>
         </nav>
 

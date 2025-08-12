@@ -258,3 +258,20 @@ export async function saveJobResultToFirestore(job) {
     chords: job.result?.chords || null,
   });
 }
+
+// Update a job's name
+export async function updateJobName(id, newName) {
+  const res = await fetch(`${BASE_URL}/job/${id}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name: newName })
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to rename job ${id}: ${res.status} ${res.statusText} — ${text}`);
+  }
+  return res.json();
+}

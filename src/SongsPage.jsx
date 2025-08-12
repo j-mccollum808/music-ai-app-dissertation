@@ -3,10 +3,17 @@ import { useState, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc } from "firebase/firestore";
 import { storage, db } from "./firebase.js";
-import { listWorkflows, listJobs, createJob, deleteJob } from "./api.js";
+import {
+  listWorkflows,
+  listJobs,
+  createJob,
+  deleteJob,
+  updateJobName,
+} from "./api.js";
 import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import { useDebounce } from "react-use";
+import ThumbnailImage from "./components/ThumbnailImage";
 
 export default function Jobs() {
   const [editingJobId, setEditingJobId] = useState(null);
@@ -70,13 +77,13 @@ export default function Jobs() {
   return (
     <div className="p-4 bg-black min-h-screen text-white">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Songs</h1>
+        <h1 className="text-2xl font-bold">My Songs</h1>
         <Link
           to="/upload"
           className="px-4 py-2 rounded text-black"
           style={{ backgroundColor: "#00FF9F" }}
         >
-          + Upload
+          + Upload Song
         </Link>
       </div>
 
@@ -124,7 +131,7 @@ export default function Jobs() {
             return (
               <div
                 key={job.id}
-                className="relative p-4 rounded-lg bg-gray-900 text-white border border-gray-700 shadow"
+                className="px-3 py-2 rounded-md bg-gray-900 text-white border border-gray-700 shadow"
               >
                 {isEditing ? (
                   <div className="flex items-center space-x-2">
@@ -152,44 +159,53 @@ export default function Jobs() {
                     </button>
                   </div>
                 ) : (
-                  <Link
-                    to={`/jobs/${job.id}`}
-                    className="block font-semibold truncate hover:underline"
-                  >
-                    {job.name?.length > 30
-                      ? job.name.slice(0, 30) + "…"
-                      : job.name}
-                  </Link>
-                )}
+                  <div className="flex items-center justify-between">
+                    <Link
+                      to={`/jobs/${job.id}`}
+                      className="flex items-center space-x-4 hover:bg-gray-800 rounded p-1 flex-1"
+                    >
+                      <ThumbnailImage
+                        youtubeUrl={job.youtubeUrl}
+                        alt={job.name}
+                        className="w-12 h-12"
+                      />
+                      <span className="font-semibold truncate">
+                        {job.name?.length > 30
+                          ? job.name.slice(0, 30) + "…"
+                          : job.name}
+                      </span>
+                    </Link>
 
-                {!isEditing && (
-                  <button
-                    onClick={() =>
-                      setMenuOpenId((prev) => (prev === job.id ? null : job.id))
-                    }
-                    className="absolute top-2 right-2 px-2 py-1 rounded hover:bg-gray-800"
-                  >
-                    ⋮
-                  </button>
+                    <button
+                      onClick={() =>
+                        setMenuOpenId((prev) =>
+                          prev === job.id ? null : job.id
+                        )
+                      }
+                      className="ml-2 px-2 py-1 rounded hover:bg-gray-800"
+                    >
+                      ⋮
+                    </button>
+                  </div>
                 )}
 
                 {isOpen && !isEditing && (
-                  <div className="absolute top-10 right-2 w-40 bg-gray-800 border border-gray-600 rounded shadow-lg z-10">
+                  <div className="absolute top-10 right-2 w-40 bg-white border rounded shadow-lg z-10">
                     <button
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-700"
+                      className="block w-full text-black text-left px-4 py-2 hover:bg-gray-100"
                       onClick={() => {
-                        setEditingJobId(job.id);
                         setEditedName(job.name || "");
+                        setEditingJobId(job.id);
                         setMenuOpenId(null);
                       }}
                     >
-                      ✏️ Rename
+                      Rename
                     </button>
                     <button
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-700 text-red-500"
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
                       onClick={handleDelete}
                     >
-                      🗑 Delete
+                      Delete
                     </button>
                   </div>
                 )}

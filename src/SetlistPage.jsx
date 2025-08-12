@@ -31,8 +31,7 @@ export default function SetlistPage() {
 
   return (
     <div className="p-4 bg-black min-h-screen text-white">
-      <p className="text-gray-400 mb-1 text-sm">setlistpage.jsx</p>
-      <h1 className="text-2xl font-bold mb-4">Setlists</h1>
+      <h1 className="text-2xl font-bold mb-4">My Setlists</h1>
       {setlists.length === 0 ? (
         <p className="text-gray-400">No setlists created yet.</p>
       ) : (
