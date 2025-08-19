@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getJob, fetchJSON } from "./api";
-import { useChordView } from "./contexts/ChordViewContext";
-
+import { getJob, fetchJSON } from "../../api/api.js"; // ✅ correct path
+import { useChordView } from "../../contexts/ChordViewContext.jsx";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from "../../api/firebase.js";
 
 export default function ChordMap() {
   const { jobId } = useParams();
@@ -84,14 +83,21 @@ export default function ChordMap() {
     load();
   }, [jobId, simplification]);
 
-  if (loading) return <div className="p-4 text-gray-600">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="p-4 text-gray-600 flex items-center space-x-2">
+        <div className="spinner" />
+        <span>Loading song data…</span>
+      </div>
+    );
+  }
   if (error) return <div className="p-4 text-red-600">{error}</div>;
 
   return (
     <div className="p-4 max-w-screen-lg mx-auto">
       <button
         onClick={() => navigate(-1)}
-        className="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+        className="mb-4 px-4 py-2 bg-[#00FF9F] text-black rounded hover:opacity-90"
       >
         ← Back
       </button>
@@ -116,7 +122,7 @@ export default function ChordMap() {
             onClick={() => setView(option)}
             className={`px-4 py-2 rounded font-medium ${
               view === option
-                ? "bg-blue-600 text-white"
+                ? "bg-[#00FF9F] text-black"
                 : "bg-gray-200 text-gray-800"
             }`}
           >

@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { listJobs, createSetlist, updateSetlist, getSetlist } from "./api.js";
+import {
+  listJobs,
+  createSetlist,
+  updateSetlist,
+  getSetlist,
+} from "../../api/api.js";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function SetlistBuilder() {
@@ -74,13 +79,13 @@ export default function SetlistBuilder() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Setlist Builder</h1>
       <button
         onClick={() => navigate(-1)}
-        className="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+        className="mb-4 px-4 py-2 bg-[#00FF9F] text-black rounded hover:opacity-90"
       >
         ← Back
-      </button>
+      </button>{" "}
+      <h1 className="text-2xl font-bold mb-6">Setlist Builder</h1>
       <input
         type="text"
         placeholder="Setlist title"

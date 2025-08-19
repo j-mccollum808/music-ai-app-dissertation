@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../firebase";
+import { storage } from "../../api/firebase.js";
 import {
   createJob,
   listWorkflows,
   searchYouTube,
   saveJobResultToFirestore,
   getJob,
-} from "../api";
+} from "../../api/api.js";
 
 export default function YouTubeToChords() {
   const [query, setQuery] = useState("");
@@ -157,9 +157,13 @@ export default function YouTubeToChords() {
       )}
 
       {loading && (
-        <p className="mt-6 text-center text-green-400 font-semibold">
-          Processing song…
-        </p>
+        <div
+          className="sticky top-0 left-0 z-20 flex items-center gap-2 text-gray-300 mb-3"
+          aria-live="polite"
+        >
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#00FF9F] border-t-transparent" />
+          <span>Processing song…</span>
+        </div>
       )}
     </div>
   );

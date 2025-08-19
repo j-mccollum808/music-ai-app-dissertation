@@ -1,15 +1,19 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import Jobs from "./SongsPage.jsx";
-import SetlistPage from "./SetlistPage.jsx";
-import SetlistBuilder from "./SetListBuilder.jsx";
+
+import Jobs from "./features/songs/SongsPage.jsx";
+import Upload from "./features/songs/Upload.jsx";
+
+import SetlistPage from "./features/setlists/SetlistPage.jsx";
+import SetlistBuilder from "./features/setlists/SetListBuilder.jsx";
+import SetlistDetailPage from "./features/setlists/SetlistDetailPage.jsx";
+
+import LyricsWithChordMap from "./features/chords/ChordMap.jsx";
+
+import YouTubeToChords from "./features/youtube/YouTubeToChords.jsx";
+
 import BackButton from "./components/BackButton.jsx";
-import SetlistDetailPage from "./SetlistDetailPage.jsx";
-import Upload from "./Upload.jsx";
+
 import { BsFillHouseDoorFill, BsJournal } from "react-icons/bs";
-import LyricsWithChordMap from "./ChordMap.jsx";
-import SettingsPage from "./SettingsPage.jsx";
-import { IoIosSettings } from "react-icons/io";
-import YouTubeToChords from "./components/YouTubeToChords.jsx";
 import { FaYoutube } from "react-icons/fa";
 
 export default function App() {
@@ -35,7 +39,6 @@ export default function App() {
           <Route path="/" element={<Jobs />} />
           <Route path="/youtube-to-chords" element={<YouTubeToChords />} />
           <Route path="/jobs" element={<Jobs />} />
-          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/setlist" element={<SetlistPage />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/builder" element={<SetlistBuilder />} />

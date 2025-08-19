@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchSetlists } from "./api.js"; // ✅ make sure this is implemented
+import { fetchSetlists } from "../../api.js"; // ✅ make sure this is implemented
 import { useNavigate } from "react-router-dom";
 
 export default function SetlistPage() {
@@ -14,8 +14,14 @@ export default function SetlistPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="p-4">Loading setlists…</p>;
-
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center space-x-2 text-gray-600">
+        <div className="spinner" />
+        <span>Loading setlist…</span>
+      </div>
+    );
+  }
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Setlists</h1>

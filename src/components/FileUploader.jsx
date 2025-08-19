@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage } from "../firebase";
+import { storage } from "../api/firebase";
 
 export default function FileUploader({
   onComplete,
@@ -61,9 +61,10 @@ export default function FileUploader({
   };
 
   return (
-    <div className="w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="w-full max-w-xl rounded-2xl border border-[#2f394b] bg-grey p-4 shadow-sm">
+      {" "}
       <div
-        className="h-40 flex items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 cursor-pointer"
+        className="h-40 flex items-center justify-center rounded-xl border-2 border-dashed border-[#2f394b] bg-[#1e2633] cursor-pointer"
         onClick={choose}
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
@@ -82,7 +83,6 @@ export default function FileUploader({
           onChange={(e) => setFile(e.target.files?.[0] || null)}
         />
       </div>
-
       {file && (
         <div className="mt-3 rounded-xl border border-gray-200 p-3">
           <div className="flex justify-between text-sm">
@@ -106,7 +106,7 @@ export default function FileUploader({
               Cancel
             </button>
             <button
-              className="ml-auto rounded-xl bg-indigo-600 px-3 py-1 text-sm text-white disabled:opacity-50"
+              className="ml-auto rounded-xl bg-indigo-600 px-3 py-1 text-sm text-grey disabled:opacity-50"
               onClick={startUpload}
               disabled={uploading}
             >
@@ -115,28 +115,6 @@ export default function FileUploader({
           </div>
         </div>
       )}
-
-      <div className="my-4 flex items-center gap-2 text-xs text-gray-400">
-        <div className="h-px flex-1 bg-gray-200" /> OR{" "}
-        <div className="h-px flex-1 bg-gray-200" />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <input
-          ref={urlInputRef}
-          type="url"
-          placeholder="Add file URL"
-          className="h-10 flex-1 rounded-xl border border-gray-300 px-3 text-sm outline-none focus:border-indigo-500"
-        />
-        <button
-          className="rounded-xl border px-3 py-2 text-sm"
-          onClick={uploadFromUrl}
-          disabled={uploading}
-        >
-          Load
-        </button>
-      </div>
-
       {error && <div className="mt-2 text-xs text-red-600">{error}</div>}
     </div>
   );

@@ -1,19 +1,21 @@
-// src/Jobs.jsx
+// src/features/songs/SongsPage.jsx
 import { useState, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc } from "firebase/firestore";
-import { storage, db } from "./firebase.js";
+
+import { storage, db } from "../../api/firebase.js"; // ✅ up to src/api
 import {
   listWorkflows,
   listJobs,
   createJob,
   deleteJob,
-  updateJobName,
-} from "./api.js";
+} from "../../api/api.js"; // ✅ up to src/api
+
 import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import { useDebounce } from "react-use";
-import ThumbnailImage from "./components/ThumbnailImage";
+
+import ThumbnailImage from "../../components/ThumbnailImage.jsx";
 
 export default function Jobs() {
   const [editingJobId, setEditingJobId] = useState(null);
@@ -26,6 +28,7 @@ export default function Jobs() {
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [jobsLoading, setJobsLoading] = useState(true);
 
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
 
@@ -36,9 +39,11 @@ export default function Jobs() {
       if (runs.length) setSelectedWorkflow(runs[0].slug);
     });
 
-    listJobs().then((res) => {
-      setApiJobs(Array.isArray(res) ? res : []);
-    });
+    setJobsLoading(true);
+    listJobs()
+      .then((res) => setApiJobs(Array.isArray(res) ? res : []))
+      .catch((err) => console.error("listJobs failed:", err))
+      .finally(() => setJobsLoading(false));
   }, []);
 
   const handleSubmit = async (e) => {
@@ -59,10 +64,19 @@ export default function Jobs() {
     }
   };
 
-  const updateJobName = async (jobId, newName) => {
-    const jobRef = doc(db, "songs", jobId);
-    await updateDoc(jobRef, { name: newName });
-    return { ...apiJobs.find((j) => j.id === jobId), name: newName };
+  // ✅ Firestore rename function
+  const handleRenameJob = async (jobId, newName) => {
+    try {
+      const jobRef = doc(db, "songs", jobId);
+      await updateDoc(jobRef, { name: newName });
+      setApiJobs((prev) =>
+        prev.map((j) => (j.id === jobId ? { ...j, name: newName } : j))
+      );
+      setEditingJobId(null);
+      setMenuOpenId(null);
+    } catch (err) {
+      console.error("Rename failed:", err);
+    }
   };
 
   const runs = apiJobs.filter((job) => {
@@ -98,7 +112,12 @@ export default function Jobs() {
         />
       </div>
 
-      {runs.length ? (
+      {jobsLoading ? (
+        <div className="p-1 flex items-center space-x-2 text-gray-300">
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#00FF9F] border-t-transparent" />
+          <span>Loading jobs…</span>
+        </div>
+      ) : runs.length ? (
         <div className="space-y-2">
           {runs.map((job) => {
             const isOpen = menuOpenId === job.id;
@@ -116,16 +135,7 @@ export default function Jobs() {
             };
 
             const handleSaveRename = async () => {
-              try {
-                const updated = await updateJobName(job.id, editedName);
-                setApiJobs((prev) =>
-                  prev.map((j) => (j.id === job.id ? updated : j))
-                );
-                setEditingJobId(null);
-                setMenuOpenId(null);
-              } catch (err) {
-                console.error("Rename failed:", err);
-              }
+              await handleRenameJob(job.id, editedName);
             };
 
             return (
