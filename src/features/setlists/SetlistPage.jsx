@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchSetlists, deleteSetlist } from "./api.js";
+import { fetchSetlists, deleteSetlist } from "../../api/api.js";
 import { useNavigate } from "react-router-dom";
 
 export default function SetlistPage() {
@@ -27,57 +27,61 @@ export default function SetlistPage() {
     }
   };
 
-  if (loading) return <p className="p-4">Loading setlists…</p>;
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center space-x-2 text-gray-300">
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#00FF9F]"></div>
+        <span>Loading setlist…</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4">
-      setlistpage.jsx
-      <h1 className="text-2xl font-bold mb-4">Setlists</h1>
+    <div className="p-4 bg-black min-h-screen text-white">
+      <h1 className="text-2xl font-bold mb-4">My Setlists</h1>
       {setlists.length === 0 ? (
-        <p>No setlists created yet.</p>
+        <p className="text-gray-400">No setlists created yet.</p>
       ) : (
         <ul className="space-y-2 mb-6">
           {setlists.map((sl) => (
             <li key={sl.id}>
               <div
-                className="flex items-center justify-between p-4 border rounded shadow bg-white hover:bg-gray-50 transition relative"
+                className="flex items-center justify-between p-4 border rounded shadow bg-gray-900 hover:bg-gray-800 transition border-gray-700 cursor-pointer"
                 onClick={() => navigate(`/setlist/${sl.id}`)}
               >
-                {/* LEFT: Setlist title and song count */}
                 <div>
-                  <p className="font-semibold text-lg">{sl.title}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="font-semibold text-white text-lg">{sl.title}</p>
+                  <p className="text-sm text-gray-400">
                     {sl.songIds?.length || 0} songs
                   </p>
                 </div>
 
-                {/* RIGHT: Action menu */}
                 <div className="relative" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() =>
                       setOpenMenuId(openMenuId === sl.id ? null : sl.id)
                     }
-                    className="text-xl px-2 py-1 rounded hover:bg-gray-200"
+                    className="text-xl px-2 py-1 rounded hover:bg-gray-700 text-white"
                   >
                     ⋯
                   </button>
 
                   {openMenuId === sl.id && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-md z-10">
+                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-600 rounded shadow-md z-10">
                       <button
                         onClick={() => {
                           navigate(`/builder?id=${sl.id}`);
                           setOpenMenuId(null);
                         }}
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700 text-white"
                       >
-                        Edit
+                        ✏️ Edit
                       </button>
                       <button
                         onClick={() => handleDelete(sl.id)}
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700 text-red-400"
                       >
-                        Delete
+                        🗑 Delete
                       </button>
                     </div>
                   )}
@@ -88,7 +92,7 @@ export default function SetlistPage() {
         </ul>
       )}
       <button
-        className="w-full py-3 bg-blue-600 text-white rounded font-semibold"
+        className="w-full py-3 bg-[#00FF9F] text-black rounded font-semibold hover:opacity-90"
         onClick={() => navigate("/builder")}
       >
         + Create New Setlist

@@ -1,7 +1,7 @@
 // src/SetlistDetailPage.jsx
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { fetchSetlists, listJobs } from "./api.js";
+import { fetchSetlists, listJobs } from "../../api/api.js";
 
 export default function SetlistDetailPage() {
   const { id } = useParams();
@@ -21,7 +21,14 @@ export default function SetlistDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <p className="p-4">Loading setlist…</p>;
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center space-x-2 text-gray-600">
+        <div className="spinner" />
+        <span>Loading setlist…</span>
+      </div>
+    );
+  }
   if (!setlist) return <p className="p-4 text-red-500">Setlist not found.</p>;
 
   const songMap = new Map(jobs.map((job) => [job.id, job]));
@@ -30,7 +37,7 @@ export default function SetlistDetailPage() {
     <div className="p-4">
       <button
         onClick={() => navigate(-1)}
-        className="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+        className="mb-4 px-4 py-2 bg-[#00FF9F] text-black rounded hover:opacity-90"
       >
         ← Back
       </button>
