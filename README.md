@@ -1,12 +1,38 @@
-# React + Vite
+Music AI — Chords & Lyrics from MP3 or YouTube
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Generate chord charts and lyric sheets from uploaded audio or YouTube videos, and build setlists for practice or gigs. Built with React + Vite, Firebase (Storage + Firestore), and a Music AI API.
 
-Currently, two official plugins are available:
+Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Node 18+ (ESM support)
+Firebase project (Storage + Firestore enabled)
+Music AI API key
+YouTube Data API key (for search)
 
-## Expanding the ESLint configuration
+npm run dev # frontend only
+npm run server # youtube helper only
+npm run dev:all # both together
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Install
+git clone <your-repo>
+cd music-ai-app
+cd music-ai
+npm install
+
+# (optional but recommended for DX)
+
+npm install -D concurrently nodemon
+
+To run code:
+
+npm run dev:all
+
+To run tests:
+
+npm test
+
+Acknowledgements
+Vite + React
+Firebase
+Music AI API
+YouTube Data API

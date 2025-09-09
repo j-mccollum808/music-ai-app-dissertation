@@ -45,5 +45,5 @@ app.post("/youtube-to-mp3", async (req, res) => {
 app.use("/download", express.static(TMP_DIR));
 
 app.listen(PORT, () => {
-  console.log(`✅ YouTube MP3 server running at http://localhost:${PORT}`);
+  console.log(`YouTube MP3 server running at http://localhost:${PORT}`);
 });

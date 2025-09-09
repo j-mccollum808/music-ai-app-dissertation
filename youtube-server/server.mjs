@@ -43,7 +43,7 @@ app.post("/youtube-to-mp3", async (req, res) => {
         res.status(500).json({ error: "Conversion failed" });
       })
       .on("end", () => {
-        console.log("✅ MP3 saved:", mp3Path);
+        console.log("MP3 saved:", mp3Path);
         res.json({ mp3Path: `http://localhost:${PORT}/download/${tempId}.mp3` });
 
         // Optional cleanup of original .webm

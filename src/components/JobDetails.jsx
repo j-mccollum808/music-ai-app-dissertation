@@ -1,4 +1,3 @@
-// src/components/jobdetails/JobDetail.jsx
 import React from "react";
 import ChordMapPage from "../ChordMapPage.jsx";
 import Lyrics from "../Lyrics.jsx";

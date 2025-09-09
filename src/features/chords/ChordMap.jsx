@@ -1,21 +1,21 @@
+// src/features/songs/ChordMap.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getJob, fetchJSON } from "../../api/api.js"; // ✅ correct path
+import { getJob, fetchJSON } from "../../api/api.js";
 import { useChordView } from "../../contexts/ChordViewContext.jsx";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../api/firebase.js";
 
 export default function ChordMap() {
   const { jobId } = useParams();
   const navigate = useNavigate();
-  const { simplification, setSimplification } = useChordView(); // already here
+  const { simplification, setSimplification } = useChordView();
 
   const [sections, setSections] = useState([]);
+  const [title, setTitle] = useState("");
   const [lines, setLines] = useState([]);
   const [chords, setChords] = useState([]);
   const [adjustedChords, setAdjustedChords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("both");
+  const [view, setView] = useState("chords");
   const [error, setError] = useState(null);
 
   const formatChord = (chordObj) => {
@@ -30,17 +30,15 @@ export default function ChordMap() {
       setError(null);
 
       try {
-        let result = null;
+        const job = await getJob(jobId);
+        if (!job.result) throw new Error("No result found from job.");
+        setTitle(job.name || job.metadata?.title || "Untitled");
 
-        const songDoc = await getDoc(doc(db, "songs", jobId));
-        if (songDoc.exists()) {
-          result = songDoc.data();
-          console.log("📄 Loaded song from Firestore:", result);
-        } else {
-          const job = await getJob(jobId);
-          if (!job.result) throw new Error("No result found from job.");
-          result = job.result;
-        }
+        // Normalize keys to lowercase
+        const rawResult = job.result;
+        const result = Object.fromEntries(
+          Object.entries(rawResult).map(([k, v]) => [k.toLowerCase(), v])
+        );
 
         if (!result.sections || !result.chords || !result.lyrics) {
           console.warn("⚠️ Missing one or more expected result URLs", result);
@@ -57,6 +55,7 @@ export default function ChordMap() {
         setLines(Array.isArray(rawLines) ? rawLines : []);
         setChords(Array.isArray(rawChords) ? rawChords : []);
 
+        // Beat normalisation logic
         const histogram = rawChords.reduce((acc, c) => {
           acc[c.start_beat] = (acc[c.start_beat] || 0) + 1;
           return acc;
@@ -73,7 +72,7 @@ export default function ChordMap() {
 
         setAdjustedChords(normalized);
       } catch (err) {
-        console.error("❌ Failed to load job data:", err);
+        console.error("Failed to load job data:", err);
         setError("Failed to load song data. Try uploading again.");
       } finally {
         setLoading(false);
@@ -101,6 +100,8 @@ export default function ChordMap() {
       >
         ← Back
       </button>
+      <h1 className="text-2xl font-bold mb-2">{title}</h1>
+
       <div className="mb-4">
         <label className="block mb-1 font-medium">Chord Complexity:</label>
         <select
@@ -116,7 +117,7 @@ export default function ChordMap() {
 
       {/* View selector */}
       <div className="mb-6 space-x-2">
-        {["both", "lyrics", "chords"].map((option) => (
+        {["lyrics", "chords"].map((option) => (
           <button
             key={option}
             onClick={() => setView(option)}
@@ -129,8 +130,8 @@ export default function ChordMap() {
             {option === "both"
               ? "Both"
               : option === "lyrics"
-              ? "Lyrics Only"
-              : "Chords Only"}
+              ? "Lyrics"
+              : "Chords"}
           </button>
         ))}
       </div>
@@ -219,7 +220,8 @@ export default function ChordMap() {
                 <div key={si} className="mb-6">
                   <h3 className="font-semibold">{sec.label}</h3>
                   {bars.length ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {" "}
                       {bars.map((bar) => {
                         const slots = Array(4).fill("–");
                         byBar[bar].forEach((c) => {

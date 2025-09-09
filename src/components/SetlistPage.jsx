@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchSetlists } from "../../api.js"; // ✅ make sure this is implemented
+import { fetchSetlists } from "../../api.js";
 import { useNavigate } from "react-router-dom";
 
 export default function SetlistPage() {

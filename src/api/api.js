@@ -1,5 +1,3 @@
-// src/api.js
-
 import {
   collection,
   getDocs,
@@ -16,6 +14,9 @@ import { db } from "./firebase.js";
 
 const BASE_URL = 'https://api.music.ai/v1';
 const API_KEY = import.meta.env.VITE_MUSIC_AI_KEY;
+const DEFAULT_WORKFLOW = "untitled-workflow-20012db";
+
+
 
 if (!API_KEY) {
   throw new Error('VITE_MUSIC_AI_KEY is not defined — did you add it to .env.local and restart Vite?');
@@ -44,9 +45,11 @@ export async function listWorkflows() {
     headers: { Authorization: API_KEY }
   });
   if (!res.ok) {
-    throw new Error(`Failed to fetch workflows: ${res.status} ${res.statusText}`);
+    throw new Error(`Failed to list workflows: ${res.status}`);
   }
-  return res.json();
+  const data = await res.json();
+  console.log("🔍 listWorkflows response:", data); // 👈 add this
+  return data.workflows || [];
 }
 
 /**
@@ -57,26 +60,31 @@ export async function listWorkflows() {
  * @returns {Promise<Object>} The created job object.
  */
 export async function createJob(audioUrl, workflowSlug, jobName) {
+  if (!audioUrl) throw new Error("createJob: audioUrl is required");
+
+  // treat '', '   ', null, undefined as "no slug"
+  const workflow = (workflowSlug ?? "").trim() || DEFAULT_WORKFLOW;
+
   const payload = {
-    name: jobName,
-    workflow: workflowSlug,
-    params: { inputUrl: audioUrl }
+    name: jobName || "Untitled",
+    workflow,                        
+    params: { inputUrl: audioUrl },
   };
 
-  console.log('createJob payload:', payload);
+  console.log("createJob payload:", payload);
   const res = await fetch(`${BASE_URL}/job`, {
-    method: 'POST',
+    method: "POST",
     headers: {
       Authorization: API_KEY,
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error('createJob error response:', errText);
-    throw new Error(`Failed to create job: ${res.status} ${res.statusText}`);
+    console.error("createJob error response:", errText);
+    throw new Error(`Failed to create job: ${res.status} ${errText || res.statusText}`);
   }
   return res.json();
 }
@@ -86,14 +94,16 @@ export async function createJob(audioUrl, workflowSlug, jobName) {
  * @param {string} id
  * @returns {Promise<Object>}
  */
-export async function getJob(id) {
-  const res = await fetch(`${BASE_URL}/job/${id}`, {
-    headers: { Authorization: API_KEY }
+export async function getJob(jobId) {
+  const res = await fetch(`${BASE_URL}/job/${jobId}`, {
+    headers: { Authorization: API_KEY },
   });
   if (!res.ok) {
-    throw new Error(`Failed to fetch job ${id}: ${res.status} ${res.statusText}`);
+    throw new Error(`Failed to fetch job: ${res.status}`);
   }
-  return res.json();
+  const job = await res.json();
+  console.log("🎵 getJob result:", job); // 👀 <-- log the full result here
+  return job;
 }
 
 export async function fetchJSON(url) {
@@ -102,7 +112,7 @@ export async function fetchJSON(url) {
 
   if (!res.ok || !contentType?.includes("application/json")) {
     const text = await res.text();
-    console.error("❌ fetchJSON failed. Response was not JSON. Sample:", text.slice(0, 300));
+    console.error("fetchJSON failed. Response was not JSON. Sample:", text.slice(0, 300));
     throw new Error("Invalid JSON response.");
   }
 
@@ -110,7 +120,7 @@ export async function fetchJSON(url) {
     return await res.json();
   } catch (err) {
     const text = await res.text();
-    console.error("❌ Failed to parse JSON. Response body:", text.slice(0, 300));
+    console.error("Failed to parse JSON. Response body:", text.slice(0, 300));
     throw new Error("JSON parse error.");
   }
 }
@@ -206,8 +216,6 @@ export async function searchYouTube(query) {
   return res.json();
 }
 
-
-
 /**
  * Given a job, fetch the chords.json output
  */
@@ -240,8 +248,6 @@ export async function getSectionsOutput(job) {
   const res = await fetch(output.file.url);
   return await res.json();
 }
-
-
 
 // ...
 export async function saveJobResultToFirestore(job) {

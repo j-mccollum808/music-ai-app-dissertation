@@ -1,14 +1,33 @@
-// src/Upload.jsx
-// src/features/songs/Upload.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { createJob } from "../../api/api.js"; // ✅ up 2 levels
-import YouTubeToChords from "../youtube/YouTubeToChords.jsx"; // ✅ sibling feature
-import FileUploader from "../../components/FileUploader.jsx"; // ✅ up 2 levels
+import {
+  listWorkflows,
+  createJob,
+  getJob,
+  saveJobResultToFirestore,
+} from "../../api/api.js";
+import YouTubeToChords from "../youtube/YouTubeToChords.jsx";
+import FileUploader from "../../components/FileUploader.jsx";
+import StickyAction from "../../components/StickyAction.jsx";
+
+async function waitForJobCompletion(jobId, maxRetries = 60, delay = 3000) {
+  for (let i = 0; i < maxRetries; i++) {
+    const j = await getJob(jobId);
+    const status = String(j?.status || "").toUpperCase();
+    if (["SUCCEEDED", "COMPLETE", "COMPLETED", "DONE"].includes(status)) {
+      return j;
+    }
+    if (["FAILED", "ERROR", "ERRORED"].includes(status)) {
+      throw new Error(`Job failed: ${status}`);
+    }
+    await new Promise((r) => setTimeout(r, delay));
+  }
+  throw new Error("Job did not complete in time");
+}
 
 export default function Upload() {
-  const [mode, setMode] = useState("upload"); // "upload" | "youtube"
+  const [mode, setMode] = useState("upload"); // "upload" or "youtube"
   const [fileUrl, setFileUrl] = useState(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,8 +43,20 @@ export default function Upload() {
     if (!fileUrl) return;
     setLoading(true);
     try {
-      const WORKFLOW = "music-ai-workflow-v1";
-      const newJob = await createJob(fileUrl, WORKFLOW, fileName);
+      const workflows = await listWorkflows();
+      if (!workflows?.length || !workflows[0]?.slug) {
+        throw new Error("No workflows available (missing slug).");
+      }
+      const workflowSlug = workflows[0].slug;
+
+      const newJob = await createJob(
+        fileUrl,
+        workflowSlug,
+        fileName || "Uploaded Song"
+      );
+      const completedJob = await waitForJobCompletion(newJob.id);
+
+      await saveJobResultToFirestore(completedJob);
       navigate(`/jobs/${newJob.id}`);
     } catch (err) {
       console.error("Upload or job creation failed:", err);
@@ -36,7 +67,7 @@ export default function Upload() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 pb-28">
       <h1 className="text-2xl font-bold mb-6">Get Chords From a Song</h1>
 
       {/* Mode toggle */}
@@ -60,21 +91,23 @@ export default function Upload() {
       </div>
 
       {mode === "upload" && (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Upload box */}
+        <form id="uploadForm" onSubmit={handleSubmit} className="space-y-4">
           <FileUploader onComplete={handleFileComplete} />
-
-          <button
-            type="submit"
-            disabled={loading || !fileUrl}
-            className="px-4 py-2 bg-[#00FF9F] text-black rounded disabled:opacity-50"
-          >
-            {loading ? "Processing…" : "Upload & Run"}
-          </button>
         </form>
       )}
 
       {mode === "youtube" && <YouTubeToChords />}
+
+      {/* Sticky bottom action*/}
+      {mode === "upload" && (
+        <StickyAction
+          type="submit"
+          form="uploadForm"
+          disabled={loading || !fileUrl}
+        >
+          {loading ? "Processing…" : "Upload & Run"}
+        </StickyAction>
+      )}
     </div>
   );
 }

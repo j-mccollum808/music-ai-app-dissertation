@@ -1,3 +1,4 @@
+// src/features/setlists/SetListBuilder.jsx
 import { useEffect, useState } from "react";
 import {
   listJobs,
@@ -8,13 +9,14 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function SetlistBuilder() {
-  const [songs, setSongs] = useState([]);
+  const [songs, setSongs] = useState([]); // <-- listJobs() goes here
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const editingId = searchParams.get("id"); // comes from /builder?id=abc
+  const editingId = searchParams.get("id"); // /builder?id=abc
 
   useEffect(() => {
     async function load() {
@@ -24,22 +26,19 @@ export default function SetlistBuilder() {
 
         if (editingId) {
           const existing = await getSetlist(editingId);
-          console.log("Editing setlist loaded:", existing);
-
-          if (!existing) {
-            console.warn("Setlist not found for ID:", editingId);
-          } else {
+          if (existing) {
             setTitle(existing.title || "");
             const ids =
               existing.songIds || existing.songs?.map((s) => s.id) || [];
             setSelectedIds(new Set(ids));
+          } else {
+            console.warn("Setlist not found for ID:", editingId);
           }
         }
       } catch (err) {
         console.error("Failed to load jobs or setlist:", err);
       }
     }
-
     load();
   }, [editingId]);
 
@@ -84,8 +83,10 @@ export default function SetlistBuilder() {
         className="mb-4 px-4 py-2 bg-[#00FF9F] text-black rounded hover:opacity-90"
       >
         ← Back
-      </button>{" "}
+      </button>
+
       <h1 className="text-2xl font-bold mb-6">Setlist Builder</h1>
+
       <input
         type="text"
         placeholder="Setlist title"
@@ -93,19 +94,21 @@ export default function SetlistBuilder() {
         onChange={(e) => setTitle(e.target.value)}
         className="w-full p-2 border rounded mb-6"
       />
+
       <div className="flex flex-col space-y-3">
         {songs.map((song) => {
-          const isSelected = selectedIds.has(song.id);
+          const isSelected = selectedIds.has(song.id); // <-- use selectedIds
           return (
             <div
               key={song.id}
+              data-testid={`job-${song.id}`} // <-- stable for tests
               className={`relative p-4 border rounded shadow-sm bg-white hover:bg-gray-50 transition cursor-pointer ${
-                isSelected ? "ring-2 ring-blue-500 border-blue-500" : ""
+                isSelected ? "ring-2 ring-[#00FF9F]" : ""
               }`}
               onClick={() => toggleSelect(song.id)}
             >
               <p className="font-semibold text-gray-800 truncate">
-                {song.name || `Song ${song.id}`}
+                {song.name || song.title || `Song ${song.id}`}
               </p>
 
               {isSelected && (
@@ -117,6 +120,7 @@ export default function SetlistBuilder() {
           );
         })}
       </div>
+
       <div className="mt-6 text-right">
         <button
           onClick={handleSave}
