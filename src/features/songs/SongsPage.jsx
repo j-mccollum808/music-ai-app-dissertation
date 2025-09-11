@@ -26,6 +26,7 @@ export default function SongsPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [jobsLoading, setJobsLoading] = useState(true);
 
+  // Debounce search term input to avoid excessive filtering
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function SongsPage() {
       .finally(() => setJobsLoading(false));
   }, []);
 
+  // Handle form submission to upload file and create job
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file || !selectedWorkflow) return;

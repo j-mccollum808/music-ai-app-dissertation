@@ -48,7 +48,7 @@ export async function listWorkflows() {
     throw new Error(`Failed to list workflows: ${res.status}`);
   }
   const data = await res.json();
-  console.log("🔍 listWorkflows response:", data); // 👈 add this
+  console.log("🔍 listWorkflows response:", data); 
   return data.workflows || [];
 }
 
@@ -102,7 +102,7 @@ export async function getJob(jobId) {
     throw new Error(`Failed to fetch job: ${res.status}`);
   }
   const job = await res.json();
-  console.log("🎵 getJob result:", job); // 👀 <-- log the full result here
+  console.log("🎵 getJob result:", job); 
   return job;
 }
 
@@ -253,7 +253,7 @@ export async function getSectionsOutput(job) {
 export async function saveJobResultToFirestore(job) {
   const jobId = job.id;
 
-  const jobDoc = doc(db, "songs", jobId); // This sets songs/{jobId}
+  const jobDoc = doc(db, "songs", jobId); // Use jobId as the document ID
   await setDoc(jobDoc, {
     jobId,
     name: job.name || "",

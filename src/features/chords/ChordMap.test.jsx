@@ -95,7 +95,7 @@ beforeEach(() => {
           end_beat: 4,
           chord_basic_pop: "Dm",
           chord_simple_pop: "Dm",
-          chord_complex_pop: "Dm7", // <-- complex form to assert
+          chord_complex_pop: "Dm7", //  complex form to assert
         },
         {
           start: 1.6,
@@ -106,7 +106,7 @@ beforeEach(() => {
           end_beat: 3,
           chord_basic_pop: "G",
           chord_simple_pop: "G",
-          chord_complex_pop: "G7", // <-- complex form to assert
+          chord_complex_pop: "G7", //  complex form to assert
         },
       ];
     }

@@ -14,6 +14,7 @@ export default function YouTubeToChords() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Wait for a job to complete by polling its status
   const waitForJobCompletion = async (jobId, maxRetries = 40, delay = 3000) => {
     for (let i = 0; i < maxRetries; i++) {
       const job = await getJob(jobId);
@@ -36,7 +37,7 @@ export default function YouTubeToChords() {
       alert("YouTube search failed. See console.");
     }
   };
-
+  // Process a selected YouTube video: convert to MP3, upload, create job
   const handleProcessVideo = async (videoId, title) => {
     setLoading(true);
     try {

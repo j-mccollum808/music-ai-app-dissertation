@@ -5,7 +5,6 @@ import { fetchSetlists, listJobs } from "../../api/api.js";
 
 export default function SetlistDetailPage() {
   const { id } = useParams();
-
   const [setlist, setSetlist] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);

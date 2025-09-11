@@ -3,13 +3,13 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import SetlistDetailPage from "../setlists/SetlistDetailPage.jsx";
 
-/* ✅ Firebase mock */
+/* Firebase mock */
 vi.mock("../../firebase", () => ({
   storage: {},
   db: {},
 }));
 
-/* ✅ API mock */
+/* API mock */
 vi.mock("../../api/api.js", async () => {
   const actual = await vi.importActual("../../api/api.js");
   return {

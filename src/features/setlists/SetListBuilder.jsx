@@ -42,12 +42,14 @@ export default function SetlistBuilder() {
     load();
   }, [editingId]);
 
+  // Toggle selection of a song ID
   const toggleSelect = (id) => {
     const copy = new Set(selectedIds);
     copy.has(id) ? copy.delete(id) : copy.add(id);
     setSelectedIds(copy);
   };
 
+  // Save the setlist (create or update)
   const handleSave = async () => {
     if (!title || selectedIds.size === 0) {
       alert("Please enter a title and select at least one song.");

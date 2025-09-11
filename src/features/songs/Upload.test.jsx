@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
-/* -------------------- Mocks (must be defined before imports) -------------------- */
+/* -------------------- Mocks  -------------------- */
 
 // Navigation spy
 const navigateSpy = vi.fn();
@@ -35,7 +35,7 @@ vi.mock("../../api/api.js", () => ({
     apiMocks.saveJobResultToFirestore(...args),
 }));
 
-// Mock FileUploader so we can “upload” a file without Firebase/storage
+// Mock FileUploader so i can “upload” a file without Firebase/storage
 vi.mock("../../components/FileUploader.jsx", () => ({
   default: ({ onComplete }) => (
     <div>
@@ -53,7 +53,7 @@ vi.mock("../../components/FileUploader.jsx", () => ({
   ),
 }));
 
-// Mock YouTubeToChords to avoid its internal effects/requests
+// Mock YouTubeToChords 
 vi.mock("../youtube/YouTubeToChords.jsx", () => ({
   default: () => (
     <div>
@@ -75,7 +75,6 @@ beforeEach(() => {
 
   window.alert = vi.fn();
 
-  // Upload.jsx expects an ARRAY from listWorkflows()
   apiMocks.listWorkflows.mockResolvedValue([{ slug: "music-ai-workflow-v1" }]);
 
   // createJob returns a job id immediately

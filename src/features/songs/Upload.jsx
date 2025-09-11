@@ -11,6 +11,7 @@ import YouTubeToChords from "../youtube/YouTubeToChords.jsx";
 import FileUploader from "../../components/FileUploader.jsx";
 import StickyAction from "../../components/StickyAction.jsx";
 
+// Wait for a job to complete by polling its status
 async function waitForJobCompletion(jobId, maxRetries = 60, delay = 3000) {
   for (let i = 0; i < maxRetries; i++) {
     const j = await getJob(jobId);
@@ -33,11 +34,13 @@ export default function Upload() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Callback when file upload completes
   const handleFileComplete = ({ file, publicUrl }) => {
     setFileUrl(publicUrl);
     setFileName(file?.name || "Uploaded Song");
   };
 
+  //  Handle form submission to upload file and create job
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!fileUrl) return;

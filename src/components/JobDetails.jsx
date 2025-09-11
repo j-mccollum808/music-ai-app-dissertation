@@ -2,6 +2,7 @@ import React from "react";
 import ChordMapPage from "../ChordMapPage.jsx";
 import Lyrics from "../Lyrics.jsx";
 
+// A page to display job details including chords and lyrics.
 export default function JobDetail() {
   return (
     <div className="p-4">

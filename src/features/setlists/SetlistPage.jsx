@@ -15,6 +15,7 @@ export default function SetlistPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Delete a setlist by ID
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this setlist?")) return;
     try {
