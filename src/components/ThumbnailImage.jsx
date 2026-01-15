@@ -1,6 +1,6 @@
-// ThumbnailImage.jsx
 import React from "react";
 
+// A component to display a thumbnail image from a YouTube URL or a default image.
 export default function ThumbnailImage({
   youtubeUrl,
   alt = "Thumbnail",

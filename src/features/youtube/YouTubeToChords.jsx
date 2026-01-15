@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import StickyAction from "../../components/StickyAction.jsx";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../api/firebase.js";
 import {
   createJob,
-  listWorkflows,
   searchYouTube,
   saveJobResultToFirestore,
   getJob,
@@ -13,37 +13,16 @@ export default function YouTubeToChords() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [workflowSlug, setWorkflowSlug] = useState("");
-  const [workflows, setWorkflows] = useState([]);
 
-  useEffect(() => {
-    listWorkflows().then((res) => {
-      const runs = res.workflows || [];
-      setWorkflows(runs);
-      if (runs.length) setWorkflowSlug(runs[0].slug);
-    });
-  }, []);
-
+  // Wait for a job to complete by polling its status
   const waitForJobCompletion = async (jobId, maxRetries = 40, delay = 3000) => {
     for (let i = 0; i < maxRetries; i++) {
       const job = await getJob(jobId);
-      console.log(
-        `⏳ Polling job ${jobId} (${i + 1}/${maxRetries}) → status: ${
-          job.status
-        }`
-      );
-      if (["SUCCEEDED", "complete"].includes(job.status)) {
-        if (!job.result) throw new Error("Job completed without result");
-        console.log("✅ Job complete:", job);
-        console.log("🎯 Sections:", job.result.Sections);
-        console.log("🎯 Lyrics:", job.result.Lyrics);
-        console.log("🎯 Chords:", job.result.chords);
-        return job;
-      }
+      if (["SUCCEEDED", "complete"].includes(job.status)) return job;
       if (["FAILED", "errored", "failed"].includes(job.status)) {
-        throw new Error(`Job failed with status: ${job.status}`);
+        throw new Error(`Job failed: ${job.status}`);
       }
-      await new Promise((res) => setTimeout(res, delay));
+      await new Promise((r) => setTimeout(r, delay));
     }
     throw new Error("Job did not complete in time");
   };
@@ -58,42 +37,35 @@ export default function YouTubeToChords() {
       alert("YouTube search failed. See console.");
     }
   };
-
+  // Process a selected YouTube video: convert to MP3, upload, create job
   const handleProcessVideo = async (videoId, title) => {
     setLoading(true);
     try {
       const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      console.log("🎬 Converting:", youtubeUrl);
 
       const res = await fetch("http://localhost:3001/youtube-to-mp3", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: youtubeUrl }),
       });
-
       const data = await res.json();
       if (!data.mp3Path) throw new Error("Conversion failed");
 
       const response = await fetch(data.mp3Path);
       const blob = await response.blob();
+
       const fileName = `yt-${videoId}-${Date.now()}.mp3`;
       const fileRef = ref(storage, `audio-uploads/${fileName}`);
       await uploadBytes(fileRef, blob);
       const firebaseUrl = await getDownloadURL(fileRef);
 
-      console.log("📤 Uploaded to Firebase:", firebaseUrl);
-
-      const job = await createJob(firebaseUrl, workflowSlug, title);
-      console.log("🚀 Job started:", job);
-
+      const job = await createJob(firebaseUrl, null, title); // workflow hardcoded in api.js
       const completedJob = await waitForJobCompletion(job.id);
 
       await saveJobResultToFirestore(completedJob);
-      console.log("📦 Saved to Firestore");
-
       window.location.href = `/jobs/${job.id}`;
     } catch (err) {
-      console.error("❌ Failed to process YouTube video:", err);
+      console.error("Failed to process YouTube video:", err);
       alert("Failed to extract chords. See console.");
     } finally {
       setLoading(false);
@@ -101,7 +73,7 @@ export default function YouTubeToChords() {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto bg-black min-h-screen text-white">
+    <div className="p-4 max-w-2xl mx-auto bg-black min-h-screen text-white relative pb-28">
       <h1 className="text-2xl font-bold mb-4">YouTube to Chords</h1>
 
       <input
@@ -117,18 +89,6 @@ export default function YouTubeToChords() {
       >
         Search
       </button>
-
-      <select
-        value={workflowSlug}
-        onChange={(e) => setWorkflowSlug(e.target.value)}
-        className="w-full p-2 border border-gray-600 rounded mb-6 bg-black text-white"
-      >
-        {workflows.map((wf) => (
-          <option key={wf.id} value={wf.slug}>
-            {wf.name || wf.slug}
-          </option>
-        ))}
-      </select>
 
       {results.length > 0 && (
         <div className="grid gap-4">
@@ -156,15 +116,8 @@ export default function YouTubeToChords() {
         </div>
       )}
 
-      {loading && (
-        <div
-          className="sticky top-0 left-0 z-20 flex items-center gap-2 text-gray-300 mb-3"
-          aria-live="polite"
-        >
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#00FF9F] border-t-transparent" />
-          <span>Processing song…</span>
-        </div>
-      )}
+      {/* Sticky bottom button (same style as Upload) */}
+      {loading && <StickyAction disabled>Processing song…</StickyAction>}
     </div>
   );
 }

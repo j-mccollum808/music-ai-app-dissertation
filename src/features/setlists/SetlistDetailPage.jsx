@@ -55,7 +55,6 @@ export default function SetlistDetailPage() {
                 key={job.id}
                 className="relative p-4 rounded shadow bg-white hover:bg-gray-50 transition border"
               >
-                {/* Entire card links to default view */}
                 <Link
                   to={`/jobs/${job.id}`}
                   className="block font-semibold text-gray-800 truncate"
@@ -65,7 +64,6 @@ export default function SetlistDetailPage() {
                     : job.name}
                 </Link>
 
-                {/* Optional: dropdown menu (disabled for now) */}
                 <button
                   disabled
                   className="absolute top-2 right-2 px-2 py-1 rounded text-gray-400"

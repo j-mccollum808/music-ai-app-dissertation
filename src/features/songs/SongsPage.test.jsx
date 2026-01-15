@@ -1,32 +1,29 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
-
-// ✅ Mock API
-vi.mock("../../api/api.js", () => ({
-  listWorkflows: vi.fn(() =>
-    Promise.resolve({
-      workflows: [{ id: "w1", slug: "default", name: "Default" }],
-    })
-  ),
-  listJobs: vi.fn(() =>
-    Promise.resolve([
-      { id: "j1", name: "Wonderwall", status: "SUCCEEDED" },
-      { id: "j2", name: "Yellow", status: "PENDING" },
-    ])
-  ),
-  updateJobName: vi.fn(async (id, newName) => ({
-    id,
-    name: newName,
-    status: "SUCCEEDED",
-  })),
-  deleteJob: vi.fn(async (id) => Promise.resolve()),
-}));
-
 import SongsPage from "./SongsPage.jsx";
 
-// Helper to render page inside router
+// 👇 Mock API
+vi.mock("../../api/api.js", () => {
+  return {
+    listJobs: vi.fn(),
+    deleteJob: vi.fn(),
+    listWorkflows: vi.fn(() => Promise.resolve({ workflows: [] })),
+    createJob: vi.fn(),
+  };
+});
+
+import { listJobs, deleteJob } from "../../api/api.js";
+
+beforeAll(() => {
+  window.confirm = vi.fn(() => true); // always confirm delete
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -37,47 +34,68 @@ function renderPage() {
 
 describe("SongsPage", () => {
   it("renders initial list and search input", async () => {
+    listJobs.mockResolvedValueOnce([
+      { id: "j1", name: "Wonderwall", status: "SUCCEEDED" },
+      { id: "j2", name: "Yellow", status: "PENDING" },
+    ]);
+
     renderPage();
+
     expect(await screen.findByText(/My Songs/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search songs/i)).toBeInTheDocument();
-    expect(screen.getByText(/Wonderwall/i)).toBeInTheDocument();
-    expect(screen.getByText(/Yellow/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Wonderwall/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Yellow/i)).toBeInTheDocument();
   });
 
   it("filters by search term (debounced)", async () => {
+    listJobs.mockResolvedValueOnce([
+      { id: "j1", name: "Wonderwall", status: "SUCCEEDED" },
+      { id: "j2", name: "Yellow", status: "PENDING" },
+    ]);
+
     renderPage();
     const input = await screen.findByPlaceholderText(/search songs/i);
     await userEvent.type(input, "won");
-    await new Promise((res) => setTimeout(res, 600));
+
+    await act(() => new Promise((res) => setTimeout(res, 600)));
+
     expect(screen.getByText(/Wonderwall/i)).toBeInTheDocument();
     expect(screen.queryByText(/Yellow/i)).not.toBeInTheDocument();
   });
 
-  it("renames a job", async () => {
-    const { updateJobName } = await import("../../api/api.js");
+  it("deletes a job", async () => {
+    listJobs.mockResolvedValueOnce([
+      { id: "j1", name: "Wonderwall", status: "SUCCEEDED" },
+    ]);
+    deleteJob.mockResolvedValueOnce();
+
     renderPage();
 
-    // Open the menu
-    const menuButtons = await screen.findAllByRole("button", { name: "⋮" });
-    await userEvent.click(menuButtons[0]);
+    await screen.findByText(/Wonderwall/i);
 
-    // Click Rename
-    const renameBtn = await screen.findByRole("button", { name: /rename/i });
-    await userEvent.click(renameBtn);
+    // Open menu
+    const menuButton = await screen.findByRole("button", { name: /menu/i });
+    await userEvent.click(menuButton);
 
-    // Find the rename input specifically (not the search box)
-    const renameInput = screen.getByDisplayValue("Wonderwall");
+    // Click Delete
+    await userEvent.click(
+      await screen.findByRole("button", { name: /delete/i })
+    );
 
-    await userEvent.clear(renameInput);
-    await userEvent.type(renameInput, "Wonderwall (Acoustic)");
+    expect(deleteJob).toHaveBeenCalledWith("j1");
+  });
 
-    // Save
-    const saveBtn = screen.getByRole("button", { name: /save/i });
-    await userEvent.click(saveBtn);
+  it("shows empty state when no songs exist", async () => {
+    listJobs.mockResolvedValueOnce([]);
+    renderPage();
 
-    expect(updateJobName).toHaveBeenCalled();
-    expect(
-      await screen.findByText(/Wonderwall \(Acoustic\)/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/No jobs found/i)).toBeInTheDocument();
+  });
+
+  it("shows loading state while fetching", async () => {
+    listJobs.mockReturnValue(new Promise(() => {})); // never resolves
+    renderPage();
+
+    expect(await screen.findByText(/Loading jobs/i)).toBeInTheDocument();
   });
 });

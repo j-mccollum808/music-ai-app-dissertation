@@ -16,6 +16,7 @@ import BackButton from "./components/BackButton.jsx";
 import { BsFillHouseDoorFill, BsJournal } from "react-icons/bs";
 import { FaYoutube } from "react-icons/fa";
 
+// Main application component with routing
 export default function App() {
   return (
     <BrowserRouter>
@@ -34,7 +35,7 @@ export default function App() {
             </Link> */}
           </div>
         </nav>
-
+        // Define application routes
         <Routes>
           <Route path="/" element={<Jobs />} />
           <Route path="/youtube-to-chords" element={<YouTubeToChords />} />

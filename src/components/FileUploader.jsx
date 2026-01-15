@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../api/firebase";
 
+// A component for uploading audio files either via file input or URL.
 export default function FileUploader({
   onComplete,
   accept = "audio/mpeg,.mp3",
@@ -21,6 +22,7 @@ export default function FileUploader({
     if (f) setFile(f);
   };
 
+  // Upload a file from a remote URL
   const uploadFromUrl = async () => {
     const url = urlInputRef.current?.value?.trim();
     if (!url) return;
@@ -35,6 +37,7 @@ export default function FileUploader({
     }
   };
 
+  // Start uploading the selected file to Firebase Storage
   const startUpload = async () => {
     if (!file) return;
     setError("");

@@ -15,6 +15,7 @@ export default function SetlistPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Delete a setlist by ID
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this setlist?")) return;
     try {
@@ -75,13 +76,13 @@ export default function SetlistPage() {
                         }}
                         className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700 text-white"
                       >
-                        ✏️ Edit
+                        Edit
                       </button>
                       <button
                         onClick={() => handleDelete(sl.id)}
                         className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700 text-red-400"
                       >
-                        🗑 Delete
+                        Delete
                       </button>
                     </div>
                   )}

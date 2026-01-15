@@ -1,15 +1,13 @@
-// src/features/songs/SongsPage.jsx
 import { useState, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, updateDoc } from "firebase/firestore";
 
-import { storage, db } from "../../api/firebase.js"; // ✅ up to src/api
+import { storage } from "../../api/firebase.js";
 import {
   listWorkflows,
   listJobs,
   createJob,
   deleteJob,
-} from "../../api/api.js"; // ✅ up to src/api
+} from "../../api/api.js";
 
 import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
@@ -17,9 +15,7 @@ import { useDebounce } from "react-use";
 
 import ThumbnailImage from "../../components/ThumbnailImage.jsx";
 
-export default function Jobs() {
-  const [editingJobId, setEditingJobId] = useState(null);
-  const [editedName, setEditedName] = useState("");
+export default function SongsPage() {
   const [workflowRuns, setWorkflowRuns] = useState([]);
   const [apiJobs, setApiJobs] = useState([]);
   const [file, setFile] = useState(null);
@@ -30,6 +26,7 @@ export default function Jobs() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [jobsLoading, setJobsLoading] = useState(true);
 
+  // Debounce search term input to avoid excessive filtering
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
 
   useEffect(() => {
@@ -46,6 +43,7 @@ export default function Jobs() {
       .finally(() => setJobsLoading(false));
   }, []);
 
+  // Handle form submission to upload file and create job
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file || !selectedWorkflow) return;
@@ -54,28 +52,15 @@ export default function Jobs() {
       const pathRef = ref(storage, `audio-uploads/${Date.now()}-${file.name}`);
       await uploadBytes(pathRef, file);
       const publicUrl = await getDownloadURL(pathRef);
+
       const newJob = await createJob(publicUrl, selectedWorkflow, file.name);
+      console.log("🎵 Created job:", newJob);
       setApiJobs((prev) => [newJob, ...prev]);
       setFile(null);
     } catch (err) {
       console.error("Upload or job creation failed:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // ✅ Firestore rename function
-  const handleRenameJob = async (jobId, newName) => {
-    try {
-      const jobRef = doc(db, "songs", jobId);
-      await updateDoc(jobRef, { name: newName });
-      setApiJobs((prev) =>
-        prev.map((j) => (j.id === jobId ? { ...j, name: newName } : j))
-      );
-      setEditingJobId(null);
-      setMenuOpenId(null);
-    } catch (err) {
-      console.error("Rename failed:", err);
     }
   };
 
@@ -121,7 +106,6 @@ export default function Jobs() {
         <div className="space-y-2">
           {runs.map((job) => {
             const isOpen = menuOpenId === job.id;
-            const isEditing = editingJobId === job.id;
 
             const handleDelete = async () => {
               if (!confirm("Are you sure you want to delete this job?")) return;
@@ -134,86 +118,46 @@ export default function Jobs() {
               }
             };
 
-            const handleSaveRename = async () => {
-              await handleRenameJob(job.id, editedName);
-            };
-
             return (
               <div
                 key={job.id}
-                className="px-3 py-2 rounded-md bg-gray-900 text-white border border-gray-700 shadow"
+                className="px-3 py-2 rounded-md bg-gray-900 text-white border border-gray-700 shadow relative"
               >
-                {isEditing ? (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
-                      className="border px-2 py-1 rounded w-full bg-gray-800 text-white border-gray-600"
+                <div className="flex items-center justify-between">
+                  <Link
+                    to={`/jobs/${job.id}`}
+                    className="flex items-center space-x-4 hover:bg-gray-800 rounded p-1 flex-1"
+                  >
+                    <ThumbnailImage
+                      youtubeUrl={job.youtubeUrl}
+                      alt={job.name}
+                      className="w-12 h-12"
                     />
-                    <button
-                      onClick={handleSaveRename}
-                      className="text-black px-3 py-1 rounded"
-                      style={{ backgroundColor: "#00FF9F" }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingJobId(null);
-                        setMenuOpenId(null);
-                      }}
-                      className="text-gray-400"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <Link
-                      to={`/jobs/${job.id}`}
-                      className="flex items-center space-x-4 hover:bg-gray-800 rounded p-1 flex-1"
-                    >
-                      <ThumbnailImage
-                        youtubeUrl={job.youtubeUrl}
-                        alt={job.name}
-                        className="w-12 h-12"
-                      />
-                      <span className="font-semibold truncate">
-                        {job.name?.length > 30
-                          ? job.name.slice(0, 30) + "…"
-                          : job.name}
-                      </span>
-                    </Link>
+                    <span className="font-semibold truncate">
+                      {job.name?.length > 30
+                        ? job.name.slice(0, 30) + "…"
+                        : job.name}
+                    </span>
+                  </Link>
 
-                    <button
-                      onClick={() =>
-                        setMenuOpenId((prev) =>
-                          prev === job.id ? null : job.id
-                        )
-                      }
-                      className="ml-2 px-2 py-1 rounded hover:bg-gray-800"
-                    >
-                      ⋮
-                    </button>
-                  </div>
-                )}
+                  {/* Menu trigger */}
+                  <button
+                    aria-label="menu"
+                    onClick={() =>
+                      setMenuOpenId((prev) => (prev === job.id ? null : job.id))
+                    }
+                    className="ml-2 px-2 py-1 rounded hover:bg-gray-800"
+                  >
+                    ⋮
+                  </button>
+                </div>
 
-                {isOpen && !isEditing && (
+                {/* Dropdown menu with Delete */}
+                {isOpen && (
                   <div className="absolute top-10 right-2 w-40 bg-white border rounded shadow-lg z-10">
                     <button
-                      className="block w-full text-black text-left px-4 py-2 hover:bg-gray-100"
-                      onClick={() => {
-                        setEditedName(job.name || "");
-                        setEditingJobId(job.id);
-                        setMenuOpenId(null);
-                      }}
-                    >
-                      Rename
-                    </button>
-                    <button
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
                       onClick={handleDelete}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
                     >
                       Delete
                     </button>

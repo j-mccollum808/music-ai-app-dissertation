@@ -19,6 +19,7 @@ app.use(express.json());
 const TMP_DIR = path.join(__dirname, "tmp");
 if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR);
 
+// Endpoint to convert YouTube video to MP3 and serve the file
 app.post("/youtube-to-mp3", async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: "Missing YouTube URL" });
@@ -43,7 +44,7 @@ app.post("/youtube-to-mp3", async (req, res) => {
         res.status(500).json({ error: "Conversion failed" });
       })
       .on("end", () => {
-        console.log("✅ MP3 saved:", mp3Path);
+        console.log("MP3 saved:", mp3Path);
         res.json({ mp3Path: `http://localhost:${PORT}/download/${tempId}.mp3` });
 
         // Optional cleanup of original .webm
@@ -56,8 +57,10 @@ app.post("/youtube-to-mp3", async (req, res) => {
   }
 });
 
+// Serve the converted MP3 files
 app.use("/download", express.static(TMP_DIR));
 
+//  Start the server
 app.listen(PORT, () => {
   console.log(`🎵 YouTube MP3 server running at http://localhost:${PORT}`);
 });
